@@ -1,0 +1,63 @@
+name: travel_trust_network_mobile
+description: "Travel Trust Network (TTN) - Mobile Application"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+  cached_network_image: ^3.4.1
+
+  # State Management & Navigation (Yêu cầu 3: Liên thông màn hình & Truyền State)
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.1.1
+
+  # Network & Security (Kết nối Java Microservices & Lưu JWT Token)
+  dio: ^5.11.1
+  flutter_secure_storage: ^11.2.0
+
+  # Authentication (Yêu cầu 2: Đăng nhập/Đăng xuất bằng Gmail)
+  google_sign_in: ^7.2.0
+
+  # Local Database (Yêu cầu 1: Thiết kế Database Local SQLite)
+  sqflite: ^2.4.2
+  path_provider: ^2.1.6
+  path: ^1.9.1
+
+  # GPS & Bản đồ (Đề tài: Xác thực chuyến đi bằng GPS & Tìm địa điểm gần đây)
+  geolocator: ^14.1.2
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+
+  # Xử lý ảnh Postcard đa lớp & Ảnh động ~ 360 độ
+  camera: ^0.12.1
+  image_picker: ^1.2.0
+  image: ^4.12.0
+  sensors_plus: ^7.1.1
+  panorama_viewer: ^2.0.2
+
+  # Clone Locket (Nhận signal chạy ngầm & Đẩy ảnh ra Icon/Home Screen Widget)
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
+  home_widget: ^0.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Thư mục chứa ảnh mẫu, khung viền Postcard và nhãn dán (Stickers)
+  assets:
+    - assets/images/
+    - assets/frames/
+    - assets/stickers/
