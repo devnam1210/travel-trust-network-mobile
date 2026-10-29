@@ -7,7 +7,7 @@ Package `services/` là **Tầng xử lý dữ liệu nền, Phần cứng & Tí
 > **Views** $\rightarrow$ **Controllers** $\rightarrow$ **Services** $\rightarrow$ **Models**
 
 ### Mục đích chính:
-- **Giao tiếp tầng mạng (Networking):** Kết nối trực tiếp với hệ sinh thái Java Microservices thông qua REST API, quản lý phiên làm việc JWT và tự động làm mới mã xác thực (Refresh Token).
+- **Giao tiếp tầng mạng (Networking):** Kết nối REST API backend, đính kèm JWT và thông báo khi phiên hết hạn.
 - **Quản lý dữ liệu cục bộ (Local Database - Yêu cầu 1):** Khởi tạo, bảo trì và thao tác CRUD trên 3 bảng SQLite Local bằng `sqflite` phục vụ chế độ làm việc ngoại tuyến (Offline Mode) và lưu trữ dữ liệu Widget.
 - **Tương tác phần cứng & Cảm biến (Hardware & Sensors):** Lấy vị trí GPS chính xác, phát hiện giả mạo vị trí (Anti-Fake GPS), tính toán khoảng cách địa lý theo thuật toán Haversine.
 - **Xử lý đồ họa nặng & Đa luồng (Background Processing & Isolates):** Thực hiện xuất ảnh Postcard từ `RenderRepaintBoundary` và xử lý ghép chuỗi ảnh / Panorama 360° trên luồng phụ (`Isolate.run`) nhằm tránh giật khung hình (frame drop) trên UI chính.
@@ -20,7 +20,7 @@ Package `services/` là **Tầng xử lý dữ liệu nền, Phần cứng & Tí
 
 | STT | Tên file | Mục đích & Công nghệ tích hợp |
 |:---:|:---|:---|
-| 1 | [`api_service.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/services/api_service.dart) | Quản lý HTTP Client (`Dio`), tự động đính kèm JWT Bearer Token và Interceptor xử lý lỗi 401 Refresh Token. |
+| 1 | [`api_service.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/services/api_service.dart) | Quản lý HTTP Client (`Dio`), tự động đính kèm JWT Bearer Token và trả lỗi API cho controller. |
 | 2 | [`local_db_service.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/services/local_db_service.dart) | Khởi tạo SQLite và quản lý 3 bảng: `cached_places`, `draft_visits`, `locket_history` (Đáp ứng Yêu cầu 1). |
 | 3 | [`gps_service.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/services/gps_service.dart) | Xin quyền vị trí, lấy GPS, chặn Mock Location (`isMocked`) và tính khoảng cách Haversine (mét). |
 | 4 | [`image_studio_service.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/services/image_studio_service.dart) | Ghép lớp Postcard bằng `RepaintBoundary` và xử lý ghép ảnh/Panorama 360° trên `Isolate.run`. |
@@ -35,7 +35,7 @@ Package `services/` là **Tầng xử lý dữ liệu nền, Phần cứng & Tí
 - **Nhiệm vụ & Chức năng cụ thể:**
   - Khởi tạo instance `Dio` với `BaseOptions` (Base URL trỏ về API Gateway, timeout 15 giây, headers chuẩn `application/json`).
   - **Auth Interceptor:** Tự động lấy `accessToken` từ bộ nhớ an toàn (`FlutterSecureStorage` hoặc SharedPreferences) để gắn vào Header: `Authorization: Bearer <accessToken>`.
-  - **Refresh Token Interceptor (Tự động phục hồi phiên):** Bắt sự kiện khi nhận mã phản hồi HTTP `401 Unauthorized`. Tạm dừng các request đang chờ, tự động gọi API `/auth/refresh` bằng `refreshToken`, cập nhật token mới vào kho lưu trữ và tự động phát lại (retry) các request bị lỗi trước đó.
+  - Khi API hồ sơ trả `401 Unauthorized`, controller xóa JWT và chuyển về màn hình đăng nhập. Backend hiện chưa có refresh token.
   - Xử lý các mã lỗi phổ biến: `400 Bad Request`, `403 Forbidden`, `404 Not Found`, `500 Server Error` và trả về thông báo lỗi thân thiện cho tầng Controller.
 
 ---

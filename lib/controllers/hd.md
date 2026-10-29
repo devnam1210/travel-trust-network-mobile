@@ -17,7 +17,7 @@ Package `controllers/` được xem là **Trái tim điều khiển, Trung tâm 
 
 | STT | Tên file | Mục đích & Trách nhiệm quản lý State | Quy tắc Nghiệp vụ (PBR) thực thi |
 |:---:|:---|:---|:---|
-| 1 | [`auth_controller.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/controllers/auth_controller.dart) | Quản lý phiên đăng nhập Google Sign-In, thông tin `currentUser` và điểm `trustScore` trên toàn App. | Yêu cầu 2: Đăng nhập Gmail, bảo mật phiên và cộng điểm uy tín. |
+| 1 | [`auth_controller.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/controllers/auth_controller.dart) | Quản lý phiên đăng nhập bằng email và mật khẩu, thông tin người dùng và điểm uy tín. | Đăng nhập, đăng ký, khôi phục phiên và đăng xuất. |
 | 2 | [`place_controller.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/controllers/place_controller.dart) | Quản lý danh sách địa điểm, tìm kiếm, bộ lọc danh mục và trạng thái Bookmark/Lưu ngoại tuyến. | Yêu cầu 1: Đồng bộ địa điểm yêu thích với bảng SQLite `cached_places`. |
 | 3 | [`visit_controller.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/controllers/visit_controller.dart) | Quản lý chu trình Check-in/Check-out chuyến đi thực tế và trạng thái xác minh GPS. | **PBR-013**: Ngăn check-in trùng lặp.<br>**PBR-017**: Bán kính GPS $\le 200m$.<br>**PBR-014**: Xác nhận Check-out hợp lệ. |
 | 4 | [`studio_controller.dart`](file:///d:/FALL26/PRM393/travel_trust_network_mobile/lib/controllers/studio_controller.dart) | Quản lý các lớp hiệu ứng (Layers: Sticker, Khung, Tem GPS), cảm biến con quay hồi chuyển 360° và file ảnh Postcard. | Quản lý lớp vẽ đồ họa và giữ State `postcardFile` chuyển tiếp sang Review. |
@@ -30,9 +30,9 @@ Package `controllers/` được xem là **Trái tim điều khiển, Trung tâm 
 ### 3.1. `auth_controller.dart` (Quản lý Xác thực & Phiên làm việc)
 - **State nắm giữ:** `UserModel? currentUser`, `bool isLoading`, `String? errorMessage`.
 - **Nhiệm vụ & Chức năng cụ thể:**
-  - Thực hiện quy trình đăng nhập bằng tài khoản Gmail thông qua `GoogleSignIn().signIn()`.
-  - Gửi Google ID Token xuống Java Auth Microservice qua `ApiService` để nhận về JWT `accessToken`, `refreshToken` và thông tin người dùng (`UserModel`).
-  - Cung cấp hàm `logout()`: Xóa token trong bộ nhớ, đăng xuất Google và reset toàn bộ State về mặc định.
+  - Gửi email và mật khẩu do người dùng tạo cho ứng dụng đến `/api/v1/auth/login`; đăng ký qua `/api/v1/auth/register`.
+  - Lưu JWT `accessToken` bằng `flutter_secure_storage`, khôi phục phiên bằng API hồ sơ và hiển thị lỗi xác thực.
+  - Cung cấp hàm `logout()`: Xóa token trên thiết bị và đặt lại trạng thái xác thực.
   - **Cập nhật điểm uy tín:** Cung cấp hàm `incrementTrustScore(int points)` để cộng điểm uy tín người dùng sau khi hoàn thành đánh giá thực địa thành công.
 
 ---

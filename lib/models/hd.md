@@ -32,15 +32,14 @@ Package `models/` là **Tầng định nghĩa cấu trúc dữ liệu (Data Defi
 ## 3. Chi tiết từng File & Cấu trúc Thuộc tính
 
 ### 3.1. `user_model.dart`
-- **Mục đích:** Lưu trữ hồ sơ người dùng hiện tại sau khi đăng nhập qua Google Sign-In và nhận phản hồi từ Java Auth Microservice.
+- **Mục đích:** Lưu trữ hồ sơ người dùng hiện tại sau khi đăng nhập bằng email và mật khẩu.
 - **Các thuộc tính chính:**
   - `String id`: Mã định danh duy nhất của người dùng (UUID).
   - `String email`: Địa chỉ Gmail của người dùng.
   - `String fullName`: Tên hiển thị của người dùng.
-  - `String? avatarUrl`: Đường dẫn ảnh đại diện Google.
+  - `String? avatarUrl`: Đường dẫn ảnh đại diện nếu có.
   - `int trustScore`: Điểm uy tín cộng dồn từ các lần Review xác thực thành công.
-  - `String? accessToken`: JWT Token dùng cho việc xác thực các Request tới API Gateway.
-  - `String? refreshToken`: Token dùng để làm mới `accessToken` khi hết hạn.
+  - JWT `accessToken` được lưu riêng trong `flutter_secure_storage`, không nằm trong `UserModel`.
 - **Phương thức bắt buộc:**
   - `factory UserModel.fromJson(Map<String, dynamic> json)`
   - `Map<String, dynamic> toJson()`

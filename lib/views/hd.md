@@ -22,7 +22,7 @@ lib/views/
 │   ├── main_layout.dart           # Khung Layout chuẩn: Top AppBar + BottomNav 4 tab + Drawer
 │   └── trust_score_badge.dart     # Huy hiệu hiển thị Điểm uy tín (Trust Score Badge)
 │
-├── login_screen.dart              # Màn hình Đăng nhập bằng Gmail (Google Sign-In)
+├── login_screen.dart              # Màn hình Đăng nhập bằng email và mật khẩu
 ├── profile_screen.dart            # Màn hình Hồ sơ cá nhân & Lịch sử Trust Score
 │
 ├── place_list_screen.dart         # [Màn liên thông 1] Khám phá & Tìm kiếm địa điểm
@@ -42,7 +42,7 @@ lib/views/
 - **Mục đích:** Đóng vai trò là "vỏ bọc" cố định cho các màn hình chính của ứng dụng, đảm bảo tính nhất quán trong trải nghiệm người dùng.
 - **Cấu trúc bao gồm 3 khu vực chính:**
   1. **Top AppBar:**
-     - Hiển thị Avatar tròn của người dùng lấy từ Google Sign-In (`auth_controller`).
+     - Hiển thị Avatar tròn của người dùng lấy từ hồ sơ backend (`auth_controller`).
      - Tên hiển thị của người dùng (`fullName`).
      - Tích hợp huy hiệu `TrustScoreBadge` hiển thị điểm uy tín hiện tại ngay góc trên bên phải.
   2. **Bottom Navigation Bar (4 Tab chính):**
@@ -64,15 +64,15 @@ lib/views/
 
 ### 3.2. Màn hình Độc lập
 
-#### `login_screen.dart` (Đăng nhập Google Sign-In)
+#### `login_screen.dart` (Đăng nhập email và mật khẩu)
 - **Mục đích:** Màn hình đầu tiên người dùng nhìn thấy khi chưa có phiên đăng nhập hợp lệ.
-- **Giao diện:** Logo Travel Trust Network sang trọng, thông điệp giới thiệu mạng lưới du lịch xác thực, và nút bấm chuẩn **"Sign in with Google"**.
-- **Tương tác:** Khi người dùng bấm nút, gọi `AuthController.signInWithGoogle()`. Hiển thị vòng xoay tải dữ liệu (`CircularProgressIndicator`) và tự động chuyển vào `MainLayout` khi đăng nhập thành công.
+- **Giao diện:** Logo Travel Trust Network, ô email, mật khẩu và nút đăng nhập; màn đăng ký có thêm họ tên và xác nhận mật khẩu.
+- **Tương tác:** Gọi `AuthController.login()` hoặc `register()`, hiển thị tiến trình và chuyển sang hồ sơ khi backend cấp JWT.
 
 #### `profile_screen.dart` (Hồ sơ cá nhân & Thống kê Trust Score)
 - **Mục đích:** Quản lý thông tin cá nhân và minh bạch hóa lịch sử điểm số.
 - **Giao diện:**
-  - Ảnh đại diện lớn, Họ tên, Email Google.
+  - Ảnh đại diện lớn, Họ tên, Email tài khoản.
   - Bảng thống kê số lần Check-in thực tế, số bài Đánh giá đã xác thực qua GPS, và tổng điểm Trust Score.
   - Danh sách lịch sử các mốc cộng điểm uy tín (ví dụ: `+10 điểm: Check-in tại Dinh Độc Lập`).
   - Nút **Đăng xuất tài khoản**.
