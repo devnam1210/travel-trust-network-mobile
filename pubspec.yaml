@@ -23,9 +23,6 @@ dependencies:
   dio: ^5.11.1
   flutter_secure_storage: ^11.2.0
 
-  # Authentication (Yêu cầu 2: Đăng nhập/Đăng xuất bằng Gmail)
-  google_sign_in: ^7.2.0
-
   # Local Database (Yêu cầu 1: Thiết kế Database Local SQLite)
   sqflite: ^2.4.2
   path_provider: ^2.1.6
