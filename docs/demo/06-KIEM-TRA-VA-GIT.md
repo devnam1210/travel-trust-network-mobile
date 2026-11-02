@@ -21,12 +21,11 @@ Lệnh tại repo backend, sử dụng JDK Microsoft **21.0.12** và Maven wrapp
 .\mvnw.cmd -B test
 ```
 
-- Main compile: **thành công**, 67 source file.
-- Test compile: **thành công**, 10 source file.
-- Tổng: **37 test, 0 assertion failure, 3 error, 0 skipped**. Lệnh kết thúc **BUILD FAILURE**.
-- **34 test pass**, gồm JWT, Haversine, auth service Google/email-password, media, place, review và visit service.
-- **3 test error**: `TravelTrustNetworkBeApplicationTests.contextLoads` (1) và `EmailPasswordAuthHttpTests` (2).
-- Nguyên nhân context không khởi tạo: PostgreSQL báo **`password authentication failed for user "ttn_local_app"`**, SQLState `28P01`. Đây là lỗi cấu hình kết nối DB, không phải 3 assertion nghiệp vụ thất bại.
+- Main compile và test compile: **thành công**.
+- Kết quả mới nhất sau cập nhật cấu hình và tạo schema: **37 test pass, 0 failure, 0 error, 0 skipped — BUILD SUCCESS**.
+- Đã kiểm chứng kết nối PostgreSQL, Spring application context và HTTP integration test: đăng ký, email trùng, đăng nhập sai/đúng, đọc profile bằng JWT và validate đầu vào.
+- Lượt đầu có 34 test pass, 3 error do sai thông tin đăng nhập DB (`28P01`). Sau khi người dùng sửa `.env`, kết nối thành công nhưng báo `relation "users" does not exist`.
+- Kiểm tra xác nhận database **local `ttn_db`, schema `public`, chưa có bảng người dùng nào**. Đã chạy script có sẵn `doc/03_create_schema.sql` để tạo 6 bảng, sau đó chạy lại toàn bộ test thành công. Không thay đổi/reset mật khẩu, không sửa `.env`, không xóa dữ liệu cũ.
 
 | Suite | Tests | Errors | Failures |
 |---|---:|---:|---:|
@@ -38,12 +37,12 @@ Lệnh tại repo backend, sử dụng JDK Microsoft **21.0.12** và Maven wrapp
 | PlaceServiceImplTests | 3 | 0 | 0 |
 | ReviewServiceImplTests | 7 | 0 | 0 |
 | VisitServiceImplTests | 11 | 0 | 0 |
-| EmailPasswordAuthHttpTests | 2 | 2 | 0 |
-| TravelTrustNetworkBeApplicationTests | 1 | 1 | 0 |
+| EmailPasswordAuthHttpTests | 2 | 0 | 0 |
+| TravelTrustNetworkBeApplicationTests | 1 | 0 | 0 |
 
-Nguồn kết quả: `target/surefire-reports/TEST-*.xml`. Không commit toàn bộ log test vì có thể chứa cấu hình môi trường. Chưa kiểm chứng đầy đủ tích hợp PostgreSQL/HTTP, lock đồng thời, runtime Swagger hay luồng điện thoại thật. Không chỉnh/reset mật khẩu database để ép test pass.
+Nguồn kết quả: `target/surefire-reports/TEST-*.xml` sau lượt chạy mới nhất. Không commit toàn bộ log test vì có thể chứa cấu hình môi trường. Kiểm tra Git xác nhận `.env` vẫn được ignore. Test HTTP dùng MockMvc và PostgreSQL thật; chưa kiểm chứng server HTTP riêng đang lắng nghe cổng 8080, runtime Swagger, lock đồng thời dưới tải hay luồng điện thoại thật.
 
-Cách xử lý: cập nhật credentials đúng trong `.env` tại máy, bảo đảm schema/migration đã áp dụng; chạy lại toàn bộ `mvnw.cmd -B test`. Không gửi mật khẩu vào chat hoặc commit `.env`.
+Khi chuyển sang máy khác: cấu hình `.env` tại máy và tạo schema/migration trước khi chạy backend. `.env` không được đưa lên Git nên checkout branch không tự thiết lập database. Không gửi mật khẩu vào chat hoặc commit `.env`.
 
 ## 3. Frontend
 
@@ -61,7 +60,7 @@ Chạy tiếp `flutter pub get --offline`: **thất bại**, vì package `flutte
 
 ## 5. Điều kiện để chốt bản đạt yêu cầu
 
-1. Xử lý kết nối DB và chạy lại test tích hợp.
+1. **Đã hoàn tất trên máy hiện tại:** kết nối DB, tạo schema và chạy lại 37 test backend thành công. Cần cấu hình riêng khi đổi máy.
 2. Hoàn tất dependency, analyzer/test, build APK, thử trên điện thoại/máy chiếu.
 3. Thêm Google Sign-In, menu ≥3 mục và ≥5 màn nghiệp vụ liên thông; tích hợp GPS/review/media theo ma trận tính năng.
 4. Thực hiện đúng phạm vi ảnh 360, postcard nhiều lớp, nhận nền và widget nếu nhóm cam kết những phần đó.
