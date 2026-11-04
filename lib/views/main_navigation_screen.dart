@@ -6,6 +6,7 @@ import '../models/user_model.dart';
 import 'places/explore_screen.dart';
 import 'profile_screen.dart';
 import 'visits/visit_history_screen.dart';
+import 'locket/locket_feed_screen.dart';
 
 class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key, required this.user});
@@ -29,6 +30,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
     final pages = [
       const ExploreScreen(),
       const VisitHistoryScreen(),
+      const LocketFeedScreen(),
       ProfileScreen(user: currentUser),
     ];
 
@@ -52,6 +54,11 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
             icon: Icon(Icons.card_travel_outlined),
             selectedIcon: Icon(Icons.card_travel_rounded),
             label: 'Chuyến đi',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.photo_outlined),
+            selectedIcon: Icon(Icons.photo_rounded),
+            label: 'Locket',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
