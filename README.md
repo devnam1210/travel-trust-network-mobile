@@ -1,6 +1,8 @@
 # Travel Trust Network Mobile
 
-Ứng dụng Flutter Android với đăng ký và đăng nhập bằng email, mật khẩu của Travel Trust Network. Email có thể là địa chỉ Gmail; mật khẩu được tạo riêng cho ứng dụng, không dùng mật khẩu tài khoản Google.
+Ứng dụng Flutter Android với đăng ký/đăng nhập email, Google Sign-In, quản lý JWT, GPS Check-in/Check-out và lịch sử chuyến đi. Mật khẩu email được tạo riêng cho ứng dụng, không dùng mật khẩu tài khoản Google.
+
+Xem [báo cáo phần được giao](doc/ASSIGNED_FEATURES.md) để cấu hình OAuth Android, GPS, mở VisitScreen bằng `placeId`, chạy trên emulator và xem kết quả kiểm tra.
 
 ## API xác thực
 

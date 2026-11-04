@@ -6,4 +6,10 @@ class AppConfig {
     'API_BASE_URL',
     defaultValue: 'http://10.0.2.2:8080/api/v1',
   );
+
+  static const googleServerClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
+
+  static const testPlaceId = String.fromEnvironment('TEST_PLACE_ID');
 }

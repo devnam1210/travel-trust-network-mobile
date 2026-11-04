@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:travel_trust_network_mobile/controllers/auth_controller.dart';
 import 'package:travel_trust_network_mobile/services/api_service.dart';
+import 'package:travel_trust_network_mobile/services/visit_service.dart';
 
 import 'support/auth_fakes.dart';
 
@@ -186,4 +187,66 @@ void main() {
     expect(backend.requests.single.path, '/auth/register');
     expect(storage.token, 'backend-jwt');
   });
+
+  test('simultaneous Visit 401s clear the session once', () async {
+    storage.token = 'saved-jwt';
+    await start();
+    final pending = Completer<ResponseBody>();
+    backend.respond = (_) => pending.future;
+    final visits = VisitService(api: api);
+    final first = expectLater(
+      visits.getMyHistory(),
+      throwsA(isA<ApiException>()),
+    );
+    final second = expectLater(
+      visits.checkOut('visit-id'),
+      throwsA(isA<ApiException>()),
+    );
+    await pumpEventQueue();
+    pending.complete(apiResponse(null, status: 401));
+    await Future.wait([first, second]);
+    expect(state().status, AuthStatus.signedOut);
+    expect(storage.clearCount, 1);
+    expect(storage.token, isNull);
+    expect(api.accessToken, isNull);
+  });
+
+  test(
+    'a late profile response cannot restore a session expired by Visit 401',
+    () async {
+      storage.token = 'saved-jwt';
+      await start();
+      final profile = Completer<ResponseBody>();
+      backend.respond = (request) => request.path == '/users/me/profile'
+          ? profile.future
+          : apiResponse(null, status: 401);
+      final refresh = controller.refreshProfile();
+      await expectLater(
+        VisitService(api: api).getMyHistory(),
+        throwsA(isA<ApiException>()),
+      );
+      profile.complete(apiResponse(profileJson()));
+      await refresh;
+      expect(state().status, AuthStatus.signedOut);
+      expect(api.accessToken, isNull);
+      expect(storage.token, isNull);
+    },
+  );
+
+  test(
+    'temporary network failure during restore retains token for retry',
+    () async {
+      storage.token = 'saved-jwt';
+      backend.respond = (options) => throw DioException(
+        requestOptions: options,
+        type: DioExceptionType.connectionError,
+      );
+      await start();
+      expect(state().status, AuthStatus.restoreFailed);
+      expect(storage.token, 'saved-jwt');
+      backend.respond = null;
+      await controller.restoreSession();
+      expect(state().status, AuthStatus.authenticated);
+    },
+  );
 }

@@ -49,6 +49,13 @@ class AuthController extends Notifier<AuthState> {
 
   @override
   AuthState build() {
+    final api = _api;
+    api.onVisitUnauthorized = () async {
+      if (ref.mounted && state.status == AuthStatus.authenticated) {
+        await _expireSession();
+      }
+    };
+    ref.onDispose(() => api.onVisitUnauthorized = null);
     scheduleMicrotask(() {
       if (ref.mounted) unawaited(restoreSession());
     });
@@ -89,6 +96,8 @@ class AuthController extends Notifier<AuthState> {
   Future<void> login(String email, String password) =>
       _authenticate(() => _auth.login(email: email, password: password));
 
+  Future<void> signInWithGoogle() => _authenticate(_auth.signInWithGoogle);
+
   Future<void> register(String email, String fullName, String password) =>
       _authenticate(
         () => _auth.register(
@@ -98,12 +107,16 @@ class AuthController extends Notifier<AuthState> {
         ),
       );
 
-  Future<void> _authenticate(Future<AuthSession> Function() request) async {
+  Future<void> _authenticate(Future<AuthSession?> Function() request) async {
     if (state.isBusy || state.status != AuthStatus.signedOut) return;
     state = const AuthState(isBusy: true);
     try {
       final session = await request();
       if (!ref.mounted) return;
+      if (session == null) {
+        state = const AuthState();
+        return;
+      }
       await _storage.write(session.accessToken);
       if (!ref.mounted) return;
       _api.accessToken = session.accessToken;
@@ -116,6 +129,7 @@ class AuthController extends Notifier<AuthState> {
   Future<void> refreshProfile() async {
     if (state.isBusy || state.status != AuthStatus.authenticated) return;
     final user = state.user;
+    final token = _api.accessToken;
     state = AuthState(
       status: AuthStatus.authenticated,
       user: user,
@@ -123,11 +137,11 @@ class AuthController extends Notifier<AuthState> {
     );
     try {
       final updated = await _auth.getProfile();
-      if (ref.mounted) {
+      if (ref.mounted && token == _api.accessToken) {
         state = AuthState(status: AuthStatus.authenticated, user: updated);
       }
     } catch (error) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || token != _api.accessToken) return;
       if (_invalidSession(error)) {
         await _expireSession();
       } else {
@@ -169,6 +183,7 @@ class AuthController extends Notifier<AuthState> {
       (error.isUnauthorized || error.statusCode == 404);
 
   Future<void> _expireSession() async {
+    state = const AuthState(status: AuthStatus.restoring, isBusy: true);
     _api.accessToken = null;
     try {
       await _storage.clear();

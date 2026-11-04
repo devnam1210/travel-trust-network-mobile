@@ -28,13 +28,14 @@ Map<String, dynamic> profileJson() => {
 };
 
 ResponseBody apiResponse(
-  Map<String, dynamic>? data, {
+  Object? data, {
   int status = 200,
   String message = 'Thành công',
+  String? code,
 }) => ResponseBody.fromString(
   jsonEncode({
     'success': status < 400,
-    'code': status < 400 ? 'SUCCESS' : 'UNAUTHORIZED',
+    'code': code ?? (status < 400 ? 'SUCCESS' : 'UNAUTHORIZED'),
     'message': message,
     'data': data,
     'timestamp': '2026-10-29T10:00:00',
@@ -58,7 +59,9 @@ class FakeBackend implements HttpClientAdapter {
     requests.add(options);
     if (respond != null) return respond!(options);
     return apiResponse(
-      options.path == '/auth/login' || options.path == '/auth/register'
+      options.path == '/auth/login' ||
+              options.path == '/auth/register' ||
+              options.path == '/auth/google'
           ? {'accessToken': 'backend-jwt', 'userProfile': profileJson()}
           : profileJson(),
     );
@@ -72,6 +75,7 @@ class MemoryTokenStorage implements TokenStorage {
   String? token;
   bool failWrite = false;
   bool failClear = false;
+  int clearCount = 0;
 
   @override
   Future<String?> read() async => token;
@@ -84,6 +88,7 @@ class MemoryTokenStorage implements TokenStorage {
 
   @override
   Future<void> clear() async {
+    clearCount++;
     if (failClear) throw StateError('Storage unavailable');
     token = null;
   }

@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../config/app_config.dart';
 import '../controllers/auth_controller.dart';
 import '../models/user_model.dart';
 import 'auth/widgets/error_notice.dart';
+import 'visits/visit_history_screen.dart';
+import 'visits/visit_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key, required this.user});
@@ -115,6 +119,38 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 28),
+                      OutlinedButton.icon(
+                        onPressed: state.isBusy
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const VisitHistoryScreen(),
+                                  ),
+                                );
+                              },
+                        icon: const Icon(Icons.history),
+                        label: const Text('Lịch sử chuyến đi'),
+                      ),
+                      if (kDebugMode && AppConfig.testPlaceId.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: state.isBusy
+                              ? null
+                              : () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => const VisitScreen(
+                                        placeId: AppConfig.testPlaceId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                          icon: const Icon(Icons.location_on_outlined),
+                          label: const Text('Kiểm thử GPS với TEST_PLACE_ID'),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
                       Text(
                         'Lịch sử điểm uy tín',
                         style: theme.textTheme.titleMedium?.copyWith(

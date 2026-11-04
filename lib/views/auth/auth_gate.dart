@@ -26,6 +26,12 @@ class _AuthGateState extends ConsumerState<AuthGate> {
     final auth = ref.watch(authControllerProvider);
     ref.listen(authControllerProvider, (previous, next) {
       if (next.status == AuthStatus.authenticated) _register = false;
+      if (previous?.status == AuthStatus.authenticated &&
+          next.status != AuthStatus.authenticated) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+        });
+      }
     });
     switch (auth.status) {
       case AuthStatus.restoring:

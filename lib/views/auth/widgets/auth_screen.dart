@@ -311,6 +311,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         : Text(widget.isRegistration ? 'Đăng ký' : 'Đăng nhập'),
                   ),
                   const SizedBox(height: 12),
+                  if (!widget.isRegistration) ...[
+                    OutlinedButton.icon(
+                      onPressed: auth.isBusy
+                          ? null
+                          : ref
+                                .read(authControllerProvider.notifier)
+                                .signInWithGoogle,
+                      icon: const Icon(Icons.account_circle_outlined),
+                      label: const Text('Đăng nhập với Google'),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   Center(
                     child: TextButton(
                       onPressed: auth.isBusy ? null : widget.onSwitchMode,

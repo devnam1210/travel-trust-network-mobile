@@ -22,6 +22,7 @@ dependencies:
   # Network & Security (Kết nối Java Microservices & Lưu JWT Token)
   dio: ^5.11.1
   flutter_secure_storage: ^11.2.0
+  google_sign_in: ^7.2.0
 
   # Local Database (Yêu cầu 1: Thiết kế Database Local SQLite)
   sqflite: ^2.4.2

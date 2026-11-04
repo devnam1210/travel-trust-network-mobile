@@ -1,0 +1,17 @@
+Map<String, dynamic> visitJson({String status = 'OPEN'}) => {
+  'id': 'f3ab383a-9d3a-49c2-8080-ea486ce277dd',
+  'userId': 'ca520c3d-180f-4bdd-a7ca-7184dcf9b80d',
+  'placeId': '15c31e12-15e5-4ba0-878f-69f6ba3e79f8',
+  'placeName': 'Địa điểm kiểm thử',
+  'placeImageUrl': null,
+  'checkInTime': '2026-11-04T09:00:00',
+  'checkOutTime': status == 'VERIFIED' ? '2026-11-04T10:00:00' : null,
+  'userLat': 21.0124,
+  'userLng': 105.5253,
+  'gpsAccuracy': 8.5,
+  'distanceMeters': 12.5,
+  'isMocked': false,
+  'status': status,
+  'rejectionReason': status == 'REJECTED' ? 'Không xác minh được' : null,
+  'isVerified': status == 'VERIFIED',
+};
