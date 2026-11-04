@@ -6,6 +6,7 @@ import '../../models/place_model.dart';
 import '../../models/review_model.dart';
 import '../../services/place_service.dart';
 import '../auth/widgets/error_notice.dart';
+import '../reviews/create_review_screen.dart';
 import '../visits/visit_screen.dart';
 
 final placeDetailProvider =
@@ -288,6 +289,22 @@ class PlaceDetailScreen extends ConsumerWidget {
                                   color: colors.onSurfaceVariant,
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              FilledButton.tonalIcon(
+                                icon: const Icon(Icons.rate_review_rounded,
+                                    size: 18),
+                                label: const Text('Viết đánh giá ngay'),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => CreateReviewScreen(
+                                        placeId: place.id,
+                                        placeName: place.name,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         )
@@ -319,10 +336,10 @@ class PlaceDetailScreen extends ConsumerWidget {
         },
       ),
 
-      // 3. Fixed Bottom Action Bar
+      // 3. Fixed Bottom Action Bar with 2 Buttons: Viết đánh giá & Check-in
       bottomNavigationBar: placeDetailAsync.maybeWhen(
         data: (place) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: colors.surface,
             boxShadow: [
@@ -336,6 +353,32 @@ class PlaceDetailScreen extends ConsumerWidget {
           child: SafeArea(
             child: Row(
               children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    icon: const Icon(Icons.rate_review_outlined),
+                    label: const Text(
+                      'Viết đánh giá',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => CreateReviewScreen(
+                            placeId: place.id,
+                            placeName: place.name,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(

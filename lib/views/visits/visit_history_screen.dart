@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../services/api_service.dart';
 import '../../services/visit_service.dart';
+import '../reviews/create_review_screen.dart';
 import 'visit_screen.dart';
 import 'visit_summary.dart';
 
@@ -83,8 +84,38 @@ class VisitHistoryScreen extends ConsumerWidget {
                           if (visit.isOpen)
                             const Padding(
                               padding: EdgeInsets.only(top: 12),
-                              child: Text('Nhấn để tiếp tục Check-out →'),
+                              child: Text(
+                                'Nhấn để tiếp tục Check-out →',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
+                          if (visit.status == 'VERIFIED') ...[
+                            const SizedBox(height: 10),
+                            const Divider(height: 1),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton.tonalIcon(
+                                icon: const Icon(Icons.rate_review_outlined,
+                                    size: 16),
+                                label: const Text('Viết đánh giá (+5 điểm)'),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => CreateReviewScreen(
+                                        placeId: visit.placeId,
+                                        placeName: visit.placeName,
+                                        initialVisitId: visit.id,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
