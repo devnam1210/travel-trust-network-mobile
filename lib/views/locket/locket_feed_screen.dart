@@ -5,6 +5,7 @@ import '../../config/app_config.dart';
 import '../../models/locket_model.dart';
 import '../../services/api_service.dart';
 import '../../services/locket_service.dart';
+import 'send_locket_screen.dart';
 
 class LocketFeedScreen extends ConsumerWidget {
   const LocketFeedScreen({super.key});
@@ -14,6 +15,13 @@ class LocketFeedScreen extends ConsumerWidget {
     final feed = ref.watch(locketFeedProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Locket')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SendLocketScreen()),
+        ),
+        icon: const Icon(Icons.add_a_photo_rounded),
+        label: const Text('Gửi ảnh'),
+      ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(locketFeedProvider.future),
         child: feed.when(
@@ -46,7 +54,7 @@ class LocketFeedScreen extends ConsumerWidget {
           )
               : GridView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisSpacing: 12,

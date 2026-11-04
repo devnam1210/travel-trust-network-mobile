@@ -58,6 +58,16 @@ class ApiService {
     Map<String, dynamic>? data,
   ]) async => _object(await _request(path, method: 'PUT', data: data));
 
+  Future<Map<String, dynamic>> upload(String path, String filePath) async {
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        filePath,
+        filename: filePath.split(RegExp(r'[\\/]')).last,
+      ),
+    });
+    return _object(await _request(path, method: 'POST', data: form));
+  }
+
   Future<List<dynamic>> getList(String path) async {
     final data = await _request(path);
     if (data is! List<dynamic>) {
@@ -76,7 +86,8 @@ class ApiService {
   Future<dynamic> _request(
     String path, {
     String method = 'GET',
-    Map<String, dynamic>? data,
+    Object? data,
+        // Map<String, dynamic>? data,
   }) async {
     final requestToken = accessToken;
     try {
