@@ -154,6 +154,43 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  Future<void> updateProfile({
+    required String fullName,
+    String? bio,
+    String? avatarUrl,
+  }) async {
+    if (state.isBusy || state.status != AuthStatus.authenticated) return;
+    final user = state.user;
+    final token = _api.accessToken;
+    state = AuthState(
+      status: AuthStatus.authenticated,
+      user: user,
+      isBusy: true,
+    );
+    try {
+      final updated = await _auth.updateProfile(
+        fullName: fullName,
+        bio: bio,
+        avatarUrl: avatarUrl,
+      );
+      if (ref.mounted && token == _api.accessToken) {
+        state = AuthState(status: AuthStatus.authenticated, user: updated);
+      }
+    } catch (error) {
+      if (!ref.mounted || token != _api.accessToken) return;
+      if (_invalidSession(error)) {
+        await _expireSession();
+      } else {
+        state = AuthState(
+          status: AuthStatus.authenticated,
+          user: user,
+          error: _message(error),
+        );
+        rethrow;
+      }
+    }
+  }
+
   Future<void> logout() async {
     if (state.isBusy) return;
     final previous = state;

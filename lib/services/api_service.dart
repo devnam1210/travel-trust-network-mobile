@@ -53,8 +53,10 @@ class ApiService {
     Map<String, dynamic> data,
   ) async => _object(await _request(path, method: 'POST', data: data));
 
-  Future<Map<String, dynamic>> put(String path) async =>
-      _object(await _request(path, method: 'PUT'));
+  Future<Map<String, dynamic>> put(
+    String path, [
+    Map<String, dynamic>? data,
+  ]) async => _object(await _request(path, method: 'PUT', data: data));
 
   Future<List<dynamic>> getList(String path) async {
     final data = await _request(path);

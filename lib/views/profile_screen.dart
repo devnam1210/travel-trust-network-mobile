@@ -6,6 +6,7 @@ import '../config/app_config.dart';
 import '../controllers/auth_controller.dart';
 import '../models/user_model.dart';
 import 'auth/widgets/error_notice.dart';
+import 'profile/edit_profile_screen.dart';
 import 'visits/visit_history_screen.dart';
 import 'visits/visit_screen.dart';
 
@@ -20,10 +21,25 @@ class ProfileScreen extends ConsumerWidget {
     final controller = ref.read(authControllerProvider.notifier);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+
+    // Luôn ưu tiên thông tin cập nhật mới nhất từ state
+    final currentUser = state.user ?? user;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hồ sơ của bạn'),
         actions: [
+          IconButton(
+            tooltip: 'Chỉnh sửa hồ sơ',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => EditProfileScreen(currentUser: currentUser),
+                ),
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Làm mới hồ sơ',
             onPressed: state.isBusy ? null : controller.refreshProfile,
@@ -51,9 +67,9 @@ class ProfileScreen extends ConsumerWidget {
                           child: SizedBox(
                             width: 96,
                             height: 96,
-                            child: user.avatarUrl?.isNotEmpty == true
+                            child: currentUser.avatarUrl?.isNotEmpty == true
                                 ? Image.network(
-                                    user.avatarUrl!,
+                                    currentUser.avatarUrl!,
                                     fit: BoxFit.cover,
                                     errorBuilder: (
                                       context,
@@ -65,25 +81,52 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Text(
-                        user.fullName,
+                        currentUser.fullName,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        user.email,
+                        currentUser.email,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: colors.onSurfaceVariant),
                       ),
-                      if (user.bio?.isNotEmpty == true) ...[
-                        const SizedBox(height: 12),
-                        Text(user.bio!, textAlign: TextAlign.center),
+                      if (currentUser.bio?.isNotEmpty == true) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          currentUser.bio!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: colors.onSurfaceVariant),
+                        ),
                       ],
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 16),
+                      Center(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.edit_rounded, size: 16),
+                          label: const Text('Chỉnh sửa thông tin'),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => EditProfileScreen(
+                                  currentUser: currentUser,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       if (state.error != null) ...[
                         ErrorNotice(message: state.error!),
                         const SizedBox(height: 20),
@@ -102,7 +145,7 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                '${user.trustScore}',
+                                '${currentUser.trustScore}',
                                 style: theme.textTheme.displaySmall?.copyWith(
                                   color: colors.onPrimaryContainer,
                                   fontWeight: FontWeight.w800,
@@ -111,14 +154,14 @@ class ProfileScreen extends ConsumerWidget {
                               const Text('Điểm uy tín'),
                               const Divider(height: 32),
                               Text(
-                                '${user.verifiedVisitCount} chuyến đi đã xác minh',
+                                '${currentUser.verifiedVisitCount} chuyến đi đã xác minh',
                                 textAlign: TextAlign.center,
                               ),
                             ],
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
                       OutlinedButton.icon(
                         onPressed: state.isBusy
                             ? null
@@ -158,10 +201,10 @@ class ProfileScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      if (user.trustScoreLogs.isEmpty)
+                      if (currentUser.trustScoreLogs.isEmpty)
                         const Text('Chưa có thay đổi điểm uy tín.')
                       else
-                        for (final log in user.trustScoreLogs)
+                        for (final log in currentUser.trustScoreLogs)
                           ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: CircleAvatar(

@@ -42,7 +42,8 @@ class AuthService {
       if (error.code == GoogleSignInExceptionCode.canceled) return null;
       throw ApiException(switch (error.code) {
         GoogleSignInExceptionCode.clientConfigurationError ||
-        GoogleSignInExceptionCode.providerConfigurationError => 'Cấu hình Google chưa đúng. Kiểm tra Web Client ID, package Android và SHA-1.',
+        GoogleSignInExceptionCode.providerConfigurationError =>
+          'Cấu hình Google chưa đúng. Kiểm tra Web Client ID, package Android và SHA-1.',
         _ => 'Đăng nhập Google thất bại. Kiểm tra mạng và thử lại.',
       });
     }
@@ -100,4 +101,16 @@ class AuthService {
 
   Future<UserModel> getProfile() async =>
       UserModel.fromJson(await api.get('/users/me/profile'));
+
+  Future<UserModel> updateProfile({
+    required String fullName,
+    String? bio,
+    String? avatarUrl,
+  }) async => UserModel.fromJson(
+    await api.put('/users/me/profile', {
+      'fullName': fullName,
+      'bio': bio,
+      'avatarUrl': avatarUrl,
+    }),
+  );
 }
