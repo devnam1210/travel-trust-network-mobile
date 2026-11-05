@@ -9,6 +9,8 @@ class AppConfig {
 
   static const googleServerClientId = String.fromEnvironment(
     'GOOGLE_SERVER_CLIENT_ID',
+    defaultValue:
+        '506895478574-shd0aimlfm88l55dcp5c8q4silmfed6p.apps.googleusercontent.com',
   );
 
   static const testPlaceId = String.fromEnvironment('TEST_PLACE_ID');
