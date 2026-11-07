@@ -39,6 +39,23 @@ Trên Windows với repo ở ổ D: và Pub cache ở ổ C:, `android/gradle.pr
 
 ## Kiểm tra
 
+### Kiểm tra GPS trước khi check-in
+
+Trong màn **GPS Check-in / Check-out**, bấm **Kiểm tra GPS / Đo lại** để xem
+tọa độ địa điểm lấy từ API, tọa độ điện thoại, sai số ước tính và khoảng cách.
+Nút này chỉ đo vị trí, chưa tạo chuyến đi. Khi bấm **Check-in**, app đo lại vị trí
+và giữ thông tin đã gửi trên màn hình nếu máy chủ từ chối vì ngoài bán kính.
+
+App yêu cầu quyền vị trí chính xác, bỏ qua mẫu quá 30 giây và chờ tối đa 20 giây
+để lấy mẫu có sai số ước tính ≤50 m. Nếu hết thời gian, app dùng mẫu gần đây có
+sai số nhỏ nhất đã nhận và hiển thị cảnh báo nếu chưa đạt độ chính xác này.
+50 m là mục tiêu lấy mẫu, không thay đổi bán kính xác thực của địa điểm trên backend.
+Vị trí trong nhà có thể kém chính xác; kiểm tra quyền **Vị trí chính xác** và thử
+đo lại ở nơi thoáng. Chưa thể xác định nguyên nhân lệch vị trí cụ thể nếu chưa có
+số đo từ điện thoại đang gặp lỗi.
+
+### Kiểm tra tự động
+
 ```powershell
 flutter analyze
 flutter test

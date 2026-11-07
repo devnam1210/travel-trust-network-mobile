@@ -3,13 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../models/place_model.dart';
 import '../../models/visit_model.dart';
 import '../../services/api_service.dart';
 import '../../services/location_service.dart';
+import '../../services/place_service.dart';
 import '../../services/visit_service.dart';
 import '../auth/widgets/error_notice.dart';
 import 'visit_history_screen.dart';
 import 'visit_summary.dart';
+
+// Fetch the target independently of a detail page that may have cached it.
+final visitPlaceProvider = FutureProvider.autoDispose
+    .family<PlaceDetailModel, String>((ref, placeId) {
+      return ref.watch(placeServiceProvider).getPlaceDetail(placeId);
+    });
 
 class VisitScreen extends ConsumerStatefulWidget {
   const VisitScreen({
@@ -29,6 +37,7 @@ class VisitScreen extends ConsumerStatefulWidget {
 
 class _VisitScreenState extends ConsumerState<VisitScreen> {
   VisitModel? _visit;
+  Position? _position;
   bool _busy = false;
   bool _needsConfirmation = false;
   String? _error;
@@ -55,6 +64,8 @@ class _VisitScreenState extends ConsumerState<VisitScreen> {
     });
     var sent = false;
     try {
+      ref.invalidate(visitPlaceProvider(widget.placeId));
+      await ref.read(visitPlaceProvider(widget.placeId).future);
       final position = await ref
           .read(locationServiceProvider)
           .getCurrentPosition();
@@ -62,6 +73,7 @@ class _VisitScreenState extends ConsumerState<VisitScreen> {
           ref.read(authControllerProvider).status != AuthStatus.authenticated) {
         return;
       }
+      setState(() => _position = position);
       sent = true;
       final visit = await ref
           .read(visitServiceProvider)
@@ -81,6 +93,93 @@ class _VisitScreenState extends ConsumerState<VisitScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<void> _measurePosition() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+      _errorCode = null;
+      _position = null;
+    });
+    try {
+      ref.invalidate(visitPlaceProvider(widget.placeId));
+      await ref.read(visitPlaceProvider(widget.placeId).future);
+      final position = await ref
+          .read(locationServiceProvider)
+          .getCurrentPosition();
+      if (mounted) setState(() => _position = position);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error is ApiException
+            ? error.message
+            : 'Không thể kiểm tra vị trí. Vui lòng thử lại.';
+        _errorCode = error is ApiException ? error.code : null;
+      });
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Widget _positionDetails() {
+    final placeAsync = ref.watch(visitPlaceProvider(widget.placeId));
+    final position = _position;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Kiểm tra vị trí check-in'),
+            const SizedBox(height: 8),
+            placeAsync.when(
+              loading: () => const Text('Đang tải vị trí địa điểm…'),
+              error: (_, _) => const Text('Chưa tải được vị trí địa điểm.'),
+              data: (place) => Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(place.name),
+                  SelectableText(
+                    'Tọa độ địa điểm: ${place.latitude.toStringAsFixed(6)}, ${place.longitude.toStringAsFixed(6)}',
+                  ),
+                  Text(
+                    'Bán kính check-in: ${place.allowedRadiusM.toStringAsFixed(0)} m',
+                  ),
+                  if (position != null)
+                    Text(
+                      'Khoảng cách ước tính: ${Geolocator.distanceBetween(position.latitude, position.longitude, place.latitude, place.longitude).toStringAsFixed(1)} m',
+                    ),
+                ],
+              ),
+            ),
+            if (position != null) ...[
+              const Divider(),
+              SelectableText(
+                'GPS điện thoại: ${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}',
+              ),
+              Text(
+                position.hasAccuracy
+                    ? 'Sai số ước tính: ±${position.accuracy.toStringAsFixed(1)} m'
+                    : 'Điện thoại chưa cung cấp sai số vị trí.',
+              ),
+              Text('Thời điểm đo: ${position.timestamp.toLocal()}'),
+              if (!position.hasAccuracy || position.accuracy > 50)
+                const Text(
+                  'Vị trí chưa ổn định. Hãy bật Vị trí chính xác và thử đo lại ở nơi thoáng.',
+                ),
+            ],
+            if (_visit == null && !_needsConfirmation)
+              OutlinedButton.icon(
+                onPressed: _busy ? null : _measurePosition,
+                icon: const Icon(Icons.my_location),
+                label: const Text('Kiểm tra GPS / Đo lại'),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _checkOut() async {
@@ -185,6 +284,7 @@ class _VisitScreenState extends ConsumerState<VisitScreen> {
           VisitSummary(visit: _visit!)
         else
           Text('Địa điểm: ${widget.placeId}'),
+        if (_visit == null) _positionDetails(),
         const SizedBox(height: 16),
         if (_error != null) ...[
           ErrorNotice(message: _error!),
@@ -199,7 +299,8 @@ class _VisitScreenState extends ConsumerState<VisitScreen> {
                   },
             child: const Text('Mở cài đặt GPS'),
           ),
-        if (_errorCode == 'LOCATION_DENIED_FOREVER')
+        if (_errorCode == 'LOCATION_DENIED_FOREVER' ||
+            _errorCode == 'LOCATION_REDUCED_ACCURACY')
           TextButton(
             onPressed: _busy
                 ? null
