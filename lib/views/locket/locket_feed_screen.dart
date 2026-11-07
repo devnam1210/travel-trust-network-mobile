@@ -5,6 +5,7 @@ import '../../config/app_config.dart';
 import '../../models/locket_model.dart';
 import '../../services/api_service.dart';
 import '../../services/locket_service.dart';
+import 'locket_image_screen.dart';
 import 'send_locket_screen.dart';
 
 class LocketFeedScreen extends ConsumerWidget {
@@ -74,63 +75,86 @@ class _LocketTile extends StatelessWidget {
   const _LocketTile({required this.signal});
   final LocketSignal signal;
 
+  void _open(BuildContext context, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LocketImageScreen(
+          imageUrl: url,
+          is360: signal.is360Image,
+          title: signal.placeName ?? signal.senderName,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final url = signal.imageUrl.isEmpty
         ? null
         : Uri.parse(AppConfig.apiBaseUrl).resolve(signal.imageUrl).toString();
-    final caption = signal.caption?.isNotEmpty == true ? ': ${signal.caption}' : '';
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (url == null)
-            const ColoredBox(color: Colors.black12)
-          else
-            Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const ColoredBox(
-                color: Colors.black12,
-                child: Icon(Icons.broken_image_outlined),
+    final caption =
+    signal.caption?.isNotEmpty == true ? ': ${signal.caption}' : '';
+
+    return GestureDetector(
+      onTap: url == null ? null : () => _open(context, url),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (url == null)
+              const ColoredBox(color: Colors.black12)
+            else
+              Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const ColoredBox(
+                  color: Colors.black12,
+                  child: Icon(Icons.broken_image_outlined),
+                ),
               ),
-            ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              color: Colors.black54,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${signal.senderName}$caption',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  if (signal.placeName != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                color: Colors.black54,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      '📍 ${signal.placeName}',
-                      maxLines: 1,
+                      '${signal.senderName}$caption',
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(color: Colors.white),
                     ),
-                ],
+                    if (signal.placeName != null)
+                      Text(
+                        '📍 ${signal.placeName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (signal.is360Image)
-            const Positioned(
-              top: 8,
-              right: 8,
-              child: Chip(label: Text('360°'), visualDensity: VisualDensity.compact),
-            ),
-        ],
+            if (signal.is360Image)
+              const Positioned(
+                top: 8,
+                right: 8,
+                child: Chip(
+                  label: Text('360°'),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

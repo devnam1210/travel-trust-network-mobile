@@ -27,6 +27,7 @@ class LocketService {
         .toList(growable: false);
   }
 
+  /// Upload ảnh, trả về URL tương đối dạng `/uploads/{uuid}.{ext}`
   Future<String> uploadImage(String filePath) async {
     final data = await api.upload('/media/upload', filePath);
     return data['url'] as String;
@@ -37,12 +38,15 @@ class LocketService {
     String? placeId,
     String? caption,
     bool is360Image = false,
-  }) async => LocketSignal.fromJson(
-    await api.post('/locket/send-signal', {
-      'imageUrl': imageUrl,
-      if (placeId != null) 'placeId': placeId,
-      if (caption != null && caption.isNotEmpty) 'caption': caption,
-      'is360Image': is360Image,
-    }),
-  );
+  }) async {
+    final trimmed = caption?.trim();
+    return LocketSignal.fromJson(
+      await api.post('/locket/send-signal', {
+        'imageUrl': imageUrl,
+        'placeId': ?placeId, // null thì không gửi
+        'caption': ?(trimmed == null || trimmed.isEmpty ? null : trimmed),
+        'is360Image': is360Image,
+      }),
+    );
+  }
 }

@@ -27,6 +27,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
   String? _filePath;
   bool _sending = false;
   String? _error;
+  bool _is360 = false;
 
   @override
   void initState() {
@@ -54,7 +55,9 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _error = 'Không mở được camera/thư viện ảnh.');
+      if (mounted) {
+        setState(() => _error = 'Không mở được camera/thư viện ảnh.');
+      }
     }
   }
 
@@ -74,6 +77,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
         imageUrl: url,
         placeId: widget.placeId,
         caption: _caption.text.trim(),
+        is360Image: _is360,
       );
       // 3. Làm mới feed
       ref.invalidate(locketFeedProvider);
@@ -84,7 +88,11 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        setState(() => _error = e is ApiException ? e.message : 'Không gửi được ảnh. Vui lòng thử lại.');
+        setState(
+              () => _error = e is ApiException
+              ? e.message
+              : 'Không gửi được ảnh. Vui lòng thử lại.',
+        );
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -147,6 +155,14 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
               labelText: 'Lời nhắn (không bắt buộc)',
               border: OutlineInputBorder(),
             ),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _is360,
+            onChanged: _sending ? null : (v) => setState(() => _is360 = v),
+            secondary: const Icon(Icons.threesixty_rounded),
+            title: const Text('Đây là ảnh 360°'),
+            subtitle: const Text('Ảnh toàn cảnh, tỉ lệ khoảng 2:1'),
           ),
           if (_error != null) ...[
             ErrorNotice(message: _error!),
