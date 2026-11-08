@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controllers/auth_controller.dart';
 import '../models/locket_model.dart';
 import 'api_service.dart';
+import 'locket_widget_service.dart';
 
 final locketServiceProvider = Provider<LocketService>(
       (ref) => LocketService(api: ref.watch(apiServiceProvider)),
@@ -12,7 +15,10 @@ final locketServiceProvider = Provider<LocketService>(
 final locketFeedProvider = FutureProvider.autoDispose<List<LocketSignal>>((ref) {
   final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
   if (userId == null) return [];
-  return ref.watch(locketServiceProvider).getFeed();
+  return ref.watch(locketServiceProvider).getFeed().then((feed) {
+    unawaited(LocketWidgetService.updateFromFeed(feed));
+    return feed;
+  });
 });
 
 class LocketService {
