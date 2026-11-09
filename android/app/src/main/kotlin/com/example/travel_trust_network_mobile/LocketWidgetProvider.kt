@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
@@ -36,7 +37,9 @@ class LocketWidgetProvider : HomeWidgetProvider() {
             views.setViewVisibility(R.id.widget_text, if (sender.isEmpty()) View.GONE else View.VISIBLE)
             views.setOnClickPendingIntent(
                 R.id.widget_root,
-                HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java)
+                HomeWidgetLaunchIntent.getActivity(
+                    context, MainActivity::class.java, Uri.parse("ttn://locket")
+                )
             )
             appWidgetManager.updateAppWidget(id, views)
         }

@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:home_widget/home_widget.dart';
 
 import '../controllers/auth_controller.dart';
 import '../models/user_model.dart';
@@ -20,6 +23,25 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   int _currentIndex = 0;
+  StreamSubscription<Uri?>? _widgetSub;
+
+  @override
+  void initState() {
+    super.initState();
+    // Chạm widget Locket ngoài màn hình chính → mở thẳng tab Locket (index 2)
+    HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
+      if (uri != null && mounted) setState(() => _currentIndex = 2);
+    });
+    _widgetSub = HomeWidget.widgetClicked.listen((uri) {
+      if (uri != null && mounted) setState(() => _currentIndex = 2);
+    });
+  }
+
+  @override
+  void dispose() {
+    _widgetSub?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../services/api_service.dart';
 import '../../services/locket_service.dart';
 import '../auth/widgets/error_notice.dart';
+import 'panorama_capture_screen.dart';
 
 class SendLocketScreen extends ConsumerStatefulWidget {
   const SendLocketScreen({super.key, this.placeId, this.initialFilePath});
@@ -58,6 +59,19 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
       if (mounted) {
         setState(() => _error = 'Không mở được camera/thư viện ảnh.');
       }
+    }
+  }
+
+  Future<void> _capture360() async {
+    final path = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const PanoramaCaptureScreen()),
+    );
+    if (path != null && mounted) {
+      setState(() {
+        _filePath = path;
+        _is360 = true;
+        _error = null;
+      });
     }
   }
 
@@ -145,6 +159,12 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _sending ? null : _capture360,
+            icon: const Icon(Icons.threesixty_rounded),
+            label: const Text('Chụp ảnh 360°'),
           ),
           const SizedBox(height: 16),
           TextField(
