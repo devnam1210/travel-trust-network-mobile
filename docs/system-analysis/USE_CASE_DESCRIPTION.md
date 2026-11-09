@@ -452,67 +452,69 @@ Các bước dưới đây mô tả code hiện có, không phải yêu cầu th
 
 1. **Use Case ID:** UC-19.
 2. **Use Case Name:** Thiết kế và xuất Postcard nhiều lớp.
-3. **Description:** Màn Studio, tem GPS, khung/sticker và export được tham chiếu trong hướng dẫn nhưng không có triển khai Dart.
+3. **Description:** Studio ghép ảnh nền, khung, sticker, chữ và tem GPS; xuất PNG, upload và trả URL.
 4. **Primary Actor:** Người dùng.
-5. **Preconditions:** UNKNOWN — chưa có luồng thực thi.
-6. **Trigger:** Chức năng được nhắc trong tài liệu hướng dẫn; chưa có trigger UI triển khai.
+5. **Preconditions:** authenticated; đang ở S09 (chọn visit VERIFIED để có tem GPS).
+6. **Trigger:** Actor bấm "Tạo postcard trong Studio" ở S09.
 7. **Main Success Flow:**
 
-   1. Actor chỉ có thể sử dụng các màn hiện có; không có điểm vào chức năng này.
-   2. System không có handler/service để hoàn thành chức năng được mô tả. Không xác định Main Success Flow triển khai.
+   1. Actor chọn/chụp ảnh nền, chọn khung, thêm sticker/chữ, kéo–phóng–xoay lớp.
+   2. Tem GPS hiện nếu có visit VERIFIED của địa điểm.
+   3. Actor bấm "Dùng postcard này": RepaintBoundary.toImage → PNG → upload (UC-16) → pop(url) về S09, ô ảnh được điền.
 
-8. **Alternative Flows:** Không có alternative flow được tìm thấy.
-9. **Exception Flows:** Không thấy postcard_studio_screen.dart/image_studio_service.dart, RenderRepaintBoundary hay caller truyền initialFilePath từ Studio.
-10. **Postconditions:** Không có postcondition triển khai để xác nhận.
-11. **Business Rules:** UC-19 không có API nghiệp vụ; API-12 chỉ lưu file ảnh có sẵn.
-12. **Related APIs:** N/A — không có API riêng chứng minh chức năng này.
-13. **Related UI Screens:** NOT_FOUND — chỉ có tham chiếu hướng dẫn.
-14. **Implementation Status:** overall **NOT_FOUND**; BE: NOT_FOUND; FE: NOT_FOUND. Runtime/E2E: NEEDS_VERIFICATION.
-15. **Source Code References:** [lib/views/hd.md](../../lib/views/hd.md); [lib/services/hd.md](../../lib/services/hd.md); [lib/views/locket/send_locket_screen.dart:17](../../lib/views/locket/send_locket_screen.dart#L17).
+8. **Alternative Flows:** "Gửi lên Locket": mở S11 với initialFilePath là PNG vừa xuất.
+9. **Exception Flows:** Upload lỗi: hiện thông báo, ở lại Studio. Không có visit VERIFIED: không có tem GPS.
+10. **Postconditions:** Có URL ảnh postcard trong form review (hoặc file sẵn sàng gửi Locket).
+11. **Business Rules:** Tem GPS là chữ vẽ lên ảnh, không do BE xác minh.
+12. **Related APIs:** API-12 (upload).
+13. **Related UI Screens:** S13, S09, S11.
+14. **Implementation Status:** overall **IMPLEMENTED**; BE: N/A; FE: IMPLEMENTED. Runtime/E2E: NEEDS_VERIFICATION.
+15. **Source Code References:** [lib/views/studio/studio_screen.dart](../../lib/views/studio/studio_screen.dart); [lib/views/reviews/create_review_screen.dart](../../lib/views/reviews/create_review_screen.dart).
 
 ## UC-20 — Chụp, ghép và xem panorama tương tác
 
 1. **Use Case ID:** UC-20.
 2. **Use Case Name:** Chụp, ghép và xem panorama tương tác.
-3. **Description:** Hướng dẫn/dependency mô tả panorama; code hiện chỉ truyền cờ 360 và render ảnh thường.
+3. **Description:** Xem ảnh 360° tương tác; không có chụp/ghép panorama.
 4. **Primary Actor:** Người dùng.
-5. **Preconditions:** UNKNOWN — chưa có luồng thực thi.
-6. **Trigger:** Chức năng được nhắc trong tài liệu hướng dẫn; chưa có trigger UI triển khai.
+5. **Preconditions:** authenticated; ảnh được gửi với công tắc 360° bật.
+6. **Trigger:** Actor chạm ảnh trong feed S10.
 7. **Main Success Flow:**
 
-   1. Actor chỉ có thể sử dụng các màn hiện có; không có điểm vào chức năng này.
-   2. System không có handler/service để hoàn thành chức năng được mô tả. Không xác định Main Success Flow triển khai.
+   1. S10 mở S12 với ảnh.
+   2. Nếu is360Image: PanoramaViewer (kéo để xoay, nút bật/tắt cảm biến); nếu không: InteractiveViewer.
 
-8. **Alternative Flows:** Không có alternative flow được tìm thấy.
-9. **Exception Flows:** Không thấy viewer/chụp ghép panorama trong Dart; UI review tick cờ và feed badge là phần metadata đã có.
-10. **Postconditions:** Không có postcondition triển khai để xác nhận.
-11. **Business Rules:** API-11/API-13 chỉ có cờ metadata, không phải API panorama.
-12. **Related APIs:** N/A — không có API riêng chứng minh chức năng này.
-13. **Related UI Screens:** NOT_FOUND — chỉ có tham chiếu hướng dẫn.
-14. **Implementation Status:** overall **NOT_FOUND**; BE: NOT_FOUND; FE: NOT_FOUND. Runtime/E2E: NEEDS_VERIFICATION.
-15. **Source Code References:** [lib/views/hd.md](../../lib/views/hd.md); [pubspec.yaml](../../pubspec.yaml); [lib/views/locket/send_locket_screen.dart:17](../../lib/views/locket/send_locket_screen.dart#L17).
+8. **Alternative Flows:** Không có.
+9. **Exception Flows:** Ảnh không tải được: hiện lỗi ảnh. Chụp/ghép panorama: ngoài phạm vi, không triển khai.
+10. **Postconditions:** Actor xem được ảnh 360°.
+11. **Business Rules:** Cờ is360Image do người gửi tự khai, không kiểm định.
+12. **Related APIs:** API-13 (cờ metadata), API-14.
+13. **Related UI Screens:** S11, S12, S10.
+14. **Implementation Status:** overall **PARTIAL**; BE: N/A; FE: PARTIAL (thiếu chụp/ghép). Runtime/E2E: NEEDS_VERIFICATION.
+15. **Source Code References:** [lib/views/locket/locket_image_screen.dart](../../lib/views/locket/locket_image_screen.dart); [lib/views/locket/send_locket_screen.dart](../../lib/views/locket/send_locket_screen.dart).
 
 ## UC-21 — Nhận push và cập nhật Home Screen Widget
 
 1. **Use Case ID:** UC-21.
 2. **Use Case Name:** Nhận push và cập nhật Home Screen Widget.
-3. **Description:** Hướng dẫn mô tả FCM background và HomeWidget nhưng chưa có handler/provider Android thực thi.
+3. **Description:** Widget Android hiển thị ảnh Locket mới nhất; không có push nền.
 4. **Primary Actor:** Người dùng.
-5. **Preconditions:** UNKNOWN — chưa có luồng thực thi.
-6. **Trigger:** Chức năng được nhắc trong tài liệu hướng dẫn; chưa có trigger UI triển khai.
+5. **Preconditions:** Android; đã thêm widget ra màn hình chính; app tải được feed.
+6. **Trigger:** App tải feed (locketFeedProvider).
 7. **Main Success Flow:**
 
-   1. Actor chỉ có thể sử dụng các màn hiện có; không có điểm vào chức năng này.
-   2. System không có handler/service để hoàn thành chức năng được mô tả. Không xác định Main Success Flow triển khai.
+   1. locketFeedProvider tải feed xong → LocketWidgetService.updateFromFeed.
+   2. Tải ảnh mới nhất về file, lưu bằng HomeWidget.saveWidgetData, gọi updateWidget.
+   3. LocketWidgetProvider (Kotlin) vẽ ảnh + người gửi/lời nhắn; chạm widget mở app.
 
-8. **Alternative Flows:** Không có alternative flow được tìm thấy.
-9. **Exception Flows:** Không thấy Firebase.initializeApp, FirebaseMessaging handler, HomeWidget.updateWidget hoặc Android widget receiver trong app source.
-10. **Postconditions:** Không có postcondition triển khai để xác nhận.
-11. **Business Rules:** API-14 là pull feed; không phát hiện API push/widget.
-12. **Related APIs:** N/A — không có API riêng chứng minh chức năng này.
-13. **Related UI Screens:** NOT_FOUND — chỉ có tham chiếu hướng dẫn.
-14. **Implementation Status:** overall **NOT_FOUND**; BE: NOT_FOUND; FE: NOT_FOUND. Runtime/E2E: NEEDS_VERIFICATION.
-15. **Source Code References:** [lib/services/hd.md](../../lib/services/hd.md); [lib/controllers/hd.md](../../lib/controllers/hd.md); [lib/views/locket/send_locket_screen.dart:17](../../lib/views/locket/send_locket_screen.dart#L17).
+8. **Alternative Flows:** Không có.
+9. **Exception Flows:** Lỗi mạng/file: bỏ qua im lặng, widget giữ ảnh cũ. Push nền FCM: không có (BE chưa gửi FCM, chưa có google-services.json).
+10. **Postconditions:** Widget hiển thị ảnh mới nhất tại lần tải feed gần nhất.
+11. **Business Rules:** Widget chỉ cập nhật khi app mở và tải feed.
+12. **Related APIs:** API-14.
+13. **Related UI Screens:** S10.
+14. **Implementation Status:** overall **PARTIAL**; BE: N/A; FE: PARTIAL (thiếu push nền). Runtime/E2E: NEEDS_VERIFICATION.
+15. **Source Code References:** [lib/services/locket_widget_service.dart](../../lib/services/locket_widget_service.dart); [LocketWidgetProvider.kt](../../android/app/src/main/kotlin/com/example/travel_trust_network_mobile/LocketWidgetProvider.kt); [lib/services/locket_service.dart](../../lib/services/locket_service.dart).
 
 ## UC-22 — Lưu địa điểm và đọc ngoại tuyến
 

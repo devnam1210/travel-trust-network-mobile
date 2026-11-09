@@ -7,6 +7,7 @@ import '../../services/review_service.dart';
 import '../../services/visit_service.dart';
 import '../auth/widgets/error_notice.dart';
 import '../places/place_detail_screen.dart';
+import '../studio/studio_screen.dart';
 import '../visits/visit_screen.dart';
 
 class CreateReviewScreen extends ConsumerStatefulWidget {
@@ -406,6 +407,27 @@ class _CreateReviewScreenState extends ConsumerState<CreateReviewScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.brush_outlined),
+                  label: const Text('Tạo postcard trong Studio'),
+                  onPressed: () async {
+                    final url = await Navigator.of(context).push<String>(
+                      MaterialPageRoute(
+                        builder: (_) => StudioScreen(
+                          placeId: widget.placeId,
+                          placeName: widget.placeName,
+                          visitId: _selectedVisitId,
+                        ),
+                      ),
+                    );
+                    if (url != null) {
+                      setState(() {
+                        _imageUrlController.text = url;
+                        _is360Media = false;
+                      });
+                    }
+                  },
+                ),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _is360Media,
