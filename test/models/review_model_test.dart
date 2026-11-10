@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:travel_trust_network_mobile/models/review_model.dart';
+import 'package:travel_trust_network_mobile/features/reviews/review_model.dart';
 
 void main() {
   group('ReviewModel Tests', () {

@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:travel_trust_network_mobile/services/api_service.dart';
-import 'package:travel_trust_network_mobile/services/location_service.dart';
+import 'package:travel_trust_network_mobile/core/api_service.dart';
+import 'package:travel_trust_network_mobile/features/visits/location_service.dart';
 
 class TestLocationPlatform extends GeolocatorPlatform {
   bool enabled = true;

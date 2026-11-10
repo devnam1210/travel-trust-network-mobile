@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:travel_trust_network_mobile/controllers/auth_controller.dart';
-import 'package:travel_trust_network_mobile/models/place_model.dart';
-import 'package:travel_trust_network_mobile/models/visit_model.dart';
-import 'package:travel_trust_network_mobile/services/api_service.dart';
-import 'package:travel_trust_network_mobile/services/location_service.dart';
-import 'package:travel_trust_network_mobile/services/visit_service.dart';
-import 'package:travel_trust_network_mobile/views/visits/visit_screen.dart';
+import 'package:travel_trust_network_mobile/features/auth/auth_controller.dart';
+import 'package:travel_trust_network_mobile/features/places/place_model.dart';
+import 'package:travel_trust_network_mobile/features/visits/visit_model.dart';
+import 'package:travel_trust_network_mobile/core/api_service.dart';
+import 'package:travel_trust_network_mobile/features/visits/location_service.dart';
+import 'package:travel_trust_network_mobile/features/visits/visit_service.dart';
+import 'package:travel_trust_network_mobile/features/visits/visit_screen.dart';
 
 class ReadyAuthController extends AuthController {
   @override

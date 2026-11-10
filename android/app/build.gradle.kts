@@ -4,6 +4,11 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// App remains runnable before Firebase is configured. Add android/app/google-services.json to enable push.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.example.travel_trust_network_mobile"
     compileSdk = flutter.compileSdkVersion

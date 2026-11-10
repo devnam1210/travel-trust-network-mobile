@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:travel_trust_network_mobile/services/api_service.dart';
-import 'package:travel_trust_network_mobile/services/review_service.dart';
+import 'package:travel_trust_network_mobile/core/api_service.dart';
+import 'package:travel_trust_network_mobile/features/reviews/review_service.dart';
 
 class FakeReviewApiService extends ApiService {
   String? lastPath;

@@ -1,7 +1,8 @@
 -- PostgreSQL: run after the backend's doc/03_create_schema.sql.
 -- Reuse the existing FPT seed UUID to preserve visits and reviews.
 -- Campus information and photo: https://daihoc.fpt.edu.vn/HN/
--- GPS coordinates and 500 m radius retain the project's existing seed values.
+-- GPS: user-provided phone reading at FPT, 2026-11-05 (21.028400, 105.534450).
+-- Keep the existing 500 m check-in radius.
 BEGIN;
 SET LOCAL client_encoding = 'UTF8';
 
@@ -18,7 +19,7 @@ VALUES (
     'Khu Giáo dục và Đào tạo, Khu Công nghệ cao Hòa Lạc, Km29 Đại lộ Thăng Long, xã Hòa Lạc, TP. Hà Nội',
     'https://daihoc.fpt.edu.vn/wp-content/uploads/2025/12/Gioi-thieu-Truong-Dai-hoc-FPT-Campus-Ha-Noi.jpg',
     'Liên hệ nhà trường trước khi tham quan',
-    21.0124, 105.5253, 500.0,
+    21.028400, 105.534450, 500.0,
     0.0, 0, FALSE
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -26,6 +27,8 @@ ON CONFLICT (id) DO UPDATE SET
     category = EXCLUDED.category,
     description = EXCLUDED.description,
     address = EXCLUDED.address,
-    image_url = EXCLUDED.image_url;
+    image_url = EXCLUDED.image_url,
+    latitude = EXCLUDED.latitude,
+    longitude = EXCLUDED.longitude;
 
 COMMIT;

@@ -63,3 +63,7 @@ flutter build apk --debug
 ```
 
 Test dùng HTTP adapter giả lập để kiểm tra payload đăng ký/đăng nhập, lỗi thông tin xác thực, JWT, khôi phục phiên, logout và luồng giao diện. Test backend kiểm tra hash, trùng email, sai mật khẩu và tài khoản cũ không có mật khẩu.
+
+### Thông báo bạn bè và tin nhắn
+
+Xem [hướng dẫn realtime và cấu hình Firebase](docs/NOTIFICATIONS.md). Trong app có thông báo realtime, chuông chưa đọc và lịch sử; thông báo khi chạy nền/đóng app cần Firebase project. Docker backend tự áp dụng migration 08; sau đó khởi động lại Spring Boot và build lại Flutter.

@@ -17,11 +17,16 @@ Ví dụ với PostgreSQL của Docker Compose (lệnh sẽ hỏi mật khẩu):
 Thay host, port, user và database nếu backend dùng cấu hình khác.
 
 Script dùng lại UUID `22222222-2222-2222-2222-222222222201` của địa điểm FPT
-đã có trong seed backend. Chạy lại chỉ cập nhật tên, danh mục, mô tả, địa chỉ
-và ảnh; giữ nguyên đánh giá, lịch sử, tọa độ, bán kính và trạng thái ẩn hiện có.
+đã có trong seed backend. Chạy lại cập nhật tên, danh mục, mô tả, địa chỉ,
+ảnh và tọa độ; giữ nguyên đánh giá, lịch sử, bán kính và trạng thái ẩn hiện có.
 Nếu chưa có địa điểm, script tạo bản ghi với điểm và số đánh giá bằng 0.
-Tọa độ `21.0124, 105.5253` và bán kính 500 m lấy từ seed hiện có của dự án,
-chưa đo kiểm tại hiện trường. Không gán giờ mở cửa chưa được xác minh cho bản ghi mới.
+Tọa độ `21.028400, 105.534450` lấy từ ảnh chụp GPS điện thoại do người dùng
+cung cấp ngày 05/11/2026 khi cho biết đang ở Đại học FPT. Đây là vị trí do người
+dùng cung cấp, chưa xác minh độc lập là tâm khuôn viên. Bán kính 500 m giữ theo
+seed hiện có. Không gán giờ mở cửa chưa được xác minh cho bản ghi mới.
+
+Để chỉ sửa GPS của bản ghi hiện có, chạy
+[update_fpt_hoa_lac_gps.sql](update_fpt_hoa_lac_gps.sql).
 
 Ảnh thật và địa chỉ lấy từ [website chính thức của trường](https://daihoc.fpt.edu.vn/HN/).
 Bản ảnh lưu tại [assets/images/fpt_hoa_lac.jpg](../assets/images/fpt_hoa_lac.jpg).

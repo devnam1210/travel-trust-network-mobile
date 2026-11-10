@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:travel_trust_network_mobile/models/place_model.dart';
+import 'package:travel_trust_network_mobile/features/places/place_model.dart';
 
 void main() {
   group('PlaceSummaryModel Tests', () {
