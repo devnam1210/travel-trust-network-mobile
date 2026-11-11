@@ -24,7 +24,9 @@ App dùng MaterialApp(home: AuthGate()), Navigator.push(MaterialPageRoute) và I
 | S08 | VisitHistoryScreen | [lib/views/visits/visit_history_screen.dart](../../lib/views/visits/visit_history_screen.dart) | Tab Chuyến đi index1 hoặc push từ Profile/Visit; cùng một màn. |
 | S09 | CreateReviewScreen | [lib/views/reviews/create_review_screen.dart](../../lib/views/reviews/create_review_screen.dart) | Từ detail với placeId/placeName; từ history VERIFIED thêm initialVisitId. |
 | S10 | LocketFeedScreen | [lib/views/locket/locket_feed_screen.dart](../../lib/views/locket/locket_feed_screen.dart) | Tab Locket index2; FAB mở SendLocketScreen. |
-| S11 | SendLocketScreen | [lib/views/locket/send_locket_screen.dart](../../lib/views/locket/send_locket_screen.dart) | Push từ feed; caller hiện tại không truyền placeId/initialFilePath. |
+| S11 | SendLocketScreen | [lib/views/locket/send_locket_screen.dart](../../lib/views/locket/send_locket_screen.dart) | Push từ feed hoặc từ Studio (truyền placeId/initialFilePath); có công tắc ảnh 360°. |
+| S12 | LocketImageScreen | [lib/views/locket/locket_image_screen.dart](../../lib/views/locket/locket_image_screen.dart) | Chạm ảnh ở feed; ảnh thường dùng InteractiveViewer, ảnh 360° dùng PanoramaViewer. |
+| S13 | StudioScreen | [lib/views/studio/studio_screen.dart](../../lib/views/studio/studio_screen.dart) | Từ nút "Tạo postcard trong Studio" ở S09; trả URL ảnh đã upload. |
 | C01 | AuthGate (shell) | [lib/views/auth/auth_gate.dart](../../lib/views/auth/auth_gate.dart) | MaterialApp.home; switch auth states; mất auth thì popUntil first. |
 | C02 | MainNavigationScreen (shell) | [lib/views/main_navigation_screen.dart](../../lib/views/main_navigation_screen.dart) | AuthGate mở khi authenticated; IndexedStack giữ 4 tab. |
 
@@ -137,7 +139,7 @@ Chứng cứ FE: [lib/views/auth/widgets/auth_screen.dart:38](../../lib/views/au
 
 ## Luồng chưa có thực thi
 
-UC-19 Studio, UC-20 panorama tương tác, UC-21 FCM/HomeWidget và UC-22 offline được tham chiếu trong hướng dẫn/dependencies; không có handler hoàn chỉnh. Locket receiver có ở entity/response nhưng DTO request không nhận và service không gán receiver. Không thể kết luận feed này dành riêng cho bạn bè hay signal là push thời gian thực.
+UC-19 Studio đã có; UC-20 chỉ có xem 360° (không chụp/ghép); UC-21 chỉ có widget (không FCM push nền); UC-22 offline được tham chiếu nhưng không có thực thi. Locket receiver có ở entity/response nhưng DTO request không nhận và service không gán receiver. Không thể kết luận feed này dành riêng cho bạn bè hay signal là push thời gian thực.
 
 State thực tế: AuthController là Riverpod Notifier; các dịch vụ có Provider và list/history/feed/detail dùng FutureProvider/autoDispose; màn Visit/Review/Send/Edit có local state. Phần lớn màn gọi service qua provider trực tiếp, không có place_controller/visit_controller riêng như hướng dẫn hd.md. Chưa có SQLite persistence cho nghiệp vụ; secure storage chỉ giữ JWT.
 

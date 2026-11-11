@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:travel_trust_network_mobile/features/locket/locket_feed_screen.d
 import 'package:travel_trust_network_mobile/features/locket/locket_service.dart';
 import 'package:travel_trust_network_mobile/features/locket/send_locket_screen.dart';
 import 'package:travel_trust_network_mobile/features/locket/private_locket_image.dart';
+import 'package:travel_trust_network_mobile/features/locket/locket_image_screen.dart';
 import 'package:travel_trust_network_mobile/features/friends/friend_service.dart';
 
 class LocketScreenApi extends ApiService {
@@ -155,6 +157,43 @@ class LocketScreenAuth extends AuthController {
 }
 
 void main() {
+  testWidgets(
+    'fullscreen private photo uses authenticated memory bytes and clears on logout',
+    (tester) async {
+      final api = LocketScreenApi()
+        ..imageBytes = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j1ioAAAAASUVORK5CYII=',
+        );
+      addTearDown(api.close);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            apiServiceProvider.overrideWithValue(api),
+            authControllerProvider.overrideWith(LocketScreenAuth.new),
+          ],
+          child: const MaterialApp(
+            home: LocketImageScreen(mediaId: 'media-1', is360: false),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(api.imageLoads, 1);
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      expect(
+        tester.widget<Image>(find.byType(Image)).image,
+        isA<MemoryImage>(),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LocketImageScreen)),
+      );
+      (container.read(authControllerProvider.notifier) as LocketScreenAuth)
+          .signOutForTest();
+      await tester.pumpAndSettle();
+      expect(find.byType(Image), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   const pickerChannel = MethodChannel('plugins.flutter.io/image_picker');
   final imagePath = File('assets/images/fpt_hoa_lac.jpg').absolute.path;
   late LocketScreenApi api;

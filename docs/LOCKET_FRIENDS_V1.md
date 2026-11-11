@@ -45,6 +45,12 @@ Unread incoming messages have red numeric badges on the bottom navigation and ea
 
 Run `docker compose up -d --wait` in the backend root to apply migrations through `doc/09_message_read_state.sql`, then restart Spring Boot and hot restart Flutter. These migrations preserve existing messages and read cursors. Detailed backend APIs, rules and tests are in `../travel-trust-network-be/doc/PRIVATE_MESSAGES.md`.
 
+Verification on 2026-11-11: Flutter analyzer reports no issues; all **151 Flutter tests** and **74 backend tests** pass. Docker migration regression tests pass for existing/fresh volumes and read-cursor preservation after restart. Read-only authenticated checks against the actual local Docker database return HTTP 200 for total unread count, inbox, conversation and history; existing messages were not sent, deleted or acknowledged by those checks.
+
+The production entry point also builds successfully as a debug Android APK with `flutter build apk --debug --no-pub -t lib/main.dart`. The artifact is `build/app/outputs/flutter-apk/app-debug.apk`.
+
+The merge from the team's latest `main` retains Studio postcard, panorama capture, fullscreen viewing and home-widget navigation in the feature folders. Studio review images use the public review-media upload endpoint; Locket images continue using private media IDs and authenticated memory-only viewing. For private Locket photos the home widget shows an entry point into the app instead of caching private pixels outside the authenticated screen.
+
 ## Friend profile timeline
 
 Tap a friend's name/avatar from the list/search, or the sender name/avatar on a Locket photo, to open their profile. It shows shared photos, captions and full date/time, newest first, with refresh and older-photo pagination. Only photos already sent to you are visible; being friends does not expose posts addressed only to other people. Old received photos remain visible after unfriend.

@@ -12,6 +12,7 @@ import '../auth/auth_controller.dart';
 import '../friends/friend_service.dart';
 import 'locket_recipients.dart';
 import 'locket_service.dart';
+import 'panorama_capture_screen.dart';
 
 class SendLocketScreen extends ConsumerStatefulWidget {
   const SendLocketScreen({super.key, this.placeId, this.initialFilePath});
@@ -32,6 +33,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
   String? _filePath;
   bool _sending = false;
   bool _picking = false;
+  bool _is360 = false;
   bool _allFriends = true;
   bool _uncertain = false;
   String? _mediaId;
@@ -63,6 +65,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
       if (file != null && mounted) {
         setState(() {
           _filePath = file.path;
+          _is360 = false;
           _mediaId = null;
           _error = null;
         });
@@ -70,6 +73,26 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
     } catch (_) {
       if (mounted) {
         setState(() => _error = 'Không mở được camera/thư viện ảnh.');
+      }
+    } finally {
+      if (mounted) setState(() => _picking = false);
+    }
+  }
+
+  Future<void> _capture360() async {
+    if (_picking || _sending || _uncertain) return;
+    setState(() => _picking = true);
+    try {
+      final path = await Navigator.of(context).push<String>(
+        MaterialPageRoute(builder: (_) => const PanoramaCaptureScreen()),
+      );
+      if (path != null && mounted) {
+        setState(() {
+          _filePath = path;
+          _mediaId = null;
+          _is360 = true;
+          _error = null;
+        });
       }
     } finally {
       if (mounted) setState(() => _picking = false);
@@ -115,6 +138,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
         recipientIds: _allFriends ? [] : targets,
         placeId: widget.placeId,
         caption: caption,
+        is360Image: _is360,
       );
       if (!mounted ||
           ref.read(authControllerProvider).user?.id != user ||
@@ -225,6 +249,19 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: _sending || _picking || _uncertain ? null : _capture360,
+            icon: const Icon(Icons.threesixty_rounded),
+            label: const Text('Chụp ảnh 360°'),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: _is360,
+            onChanged: _sending || _picking || _uncertain
+                ? null
+                : (value) => setState(() => _is360 = value),
+            title: const Text('Đây là ảnh 360°'),
+          ),
           TextField(
             controller: _caption,
             enabled: editable,

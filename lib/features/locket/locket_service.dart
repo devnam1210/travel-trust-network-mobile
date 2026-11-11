@@ -1,10 +1,12 @@
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_service.dart';
 import '../auth/auth_controller.dart' show authControllerProvider;
 import 'locket_model.dart';
+import 'locket_widget_service.dart';
 
 final locketServiceProvider = Provider<LocketService>(
   (ref) => LocketService(api: ref.watch(apiServiceProvider)),
@@ -14,8 +16,16 @@ final locketFeedProvider = FutureProvider.autoDispose<List<LocketSignal>>((
   ref,
 ) {
   final userId = ref.watch(authControllerProvider.select((a) => a.user?.id));
-  if (userId == null) return [];
-  return ref.watch(locketServiceProvider).getFeed();
+  if (userId == null) {
+    unawaited(LocketWidgetService.updateFromFeed(const []));
+    return [];
+  }
+  return ref.watch(locketServiceProvider).getFeed().then((feed) {
+    if (ref.mounted && ref.read(authControllerProvider).user?.id == userId) {
+      unawaited(LocketWidgetService.updateFromFeed(feed));
+    }
+    return feed;
+  });
 });
 
 final locketHistoryProvider = FutureProvider.autoDispose

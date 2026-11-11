@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/auth/auth_controller.dart';
@@ -23,7 +26,28 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
     with SingleTickerProviderStateMixin {
+  StreamSubscription<Uri?>? _widgetSub;
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_listenToWidget());
+  }
+
+  Future<void> _listenToWidget() async {
+    try {
+      final uri = await HomeWidget.initiallyLaunchedFromHomeWidget();
+      if (!mounted) return;
+      if (uri != null) setState(() => _currentIndex = 2);
+      _widgetSub = HomeWidget.widgetClicked.listen((uri) {
+        if (uri != null && mounted) setState(() => _currentIndex = 2);
+      }, onError: (Object _) {});
+    } catch (_) {
+      /* Desktop/tests may not provide the Android widget plugin. */
+    }
+  }
+
   bool _messagesVisited = false;
   late final _tabController = AnimationController(
     vsync: this,
@@ -36,6 +60,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen>
 
   @override
   void dispose() {
+    unawaited(_widgetSub?.cancel());
     _tabController.dispose();
     super.dispose();
   }

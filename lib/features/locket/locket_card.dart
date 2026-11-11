@@ -9,6 +9,7 @@ import '../friends/friend_profile_screen.dart';
 import '../messages/chat_screen.dart';
 import '../messages/message_model.dart';
 import 'locket_model.dart';
+import 'locket_image_screen.dart';
 import 'locket_service.dart';
 import 'private_locket_image.dart';
 
@@ -111,15 +112,28 @@ class _LocketCardState extends ConsumerState<LocketCard> {
             subtitle: Text(timeLabel),
             trailing: _signal.is360Image ? const Text('360°') : null,
           ),
-          AspectRatio(
-            aspectRatio: 1,
-            child: RepaintBoundary(
-              child: _signal.mediaId == null
-                  ? const ColoredBox(
-                      color: Colors.black12,
-                      child: Icon(Icons.lock_outline),
-                    )
-                  : PrivateLocketImage(mediaId: _signal.mediaId!),
+          GestureDetector(
+            onTap: _signal.mediaId == null
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => LocketImageScreen(
+                        mediaId: _signal.mediaId!,
+                        is360: _signal.is360Image,
+                        title: _signal.placeName ?? _signal.senderName,
+                      ),
+                    ),
+                  ),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: RepaintBoundary(
+                child: _signal.mediaId == null
+                    ? const ColoredBox(
+                        color: Colors.black12,
+                        child: Icon(Icons.lock_outline),
+                      )
+                    : PrivateLocketImage(mediaId: _signal.mediaId!),
+              ),
             ),
           ),
           if (_signal.caption?.isNotEmpty == true)

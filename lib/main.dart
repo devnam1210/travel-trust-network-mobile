@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'features/auth/auth_gate.dart';
+import 'features/locket/locket_background.dart';
 import 'features/notifications/notification_host.dart';
 import 'shared/motion/app_motion.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  startLocketBackgroundSync();
   runApp(const ProviderScope(child: MyApp()));
 }
 
