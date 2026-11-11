@@ -12,11 +12,13 @@ Backend nằm ở `../travel-trust-network-be`:
 | --- | --- | --- |
 | `POST /api/v1/auth/register` | `email`, `fullName`, `password` | JWT và hồ sơ mới |
 | `POST /api/v1/auth/login` | `email`, `password` | JWT và hồ sơ hiện có |
+| `POST /api/v1/auth/refresh` | `refreshToken` | Cặp access token và refresh token mới |
+| `POST /api/v1/auth/logout` | `refreshToken` | Thu hồi phiên trên thiết bị hiện tại |
 | `GET /api/v1/users/me/profile` | `Authorization: Bearer <accessToken>` | Hồ sơ người dùng |
 
 Đăng ký yêu cầu mật khẩu 8–128 ký tự và email chưa có trong hệ thống. Backend chuẩn hóa email về chữ thường, so khớp không phân biệt hoa/thường và lưu **hash PBKDF2**, không lưu mật khẩu gốc. Lần đăng ký đầu nhận điểm uy tín khởi tạo. API trả dữ liệu trong envelope `success`, `code`, `message`, `data` với `data.accessToken` và `data.userProfile`.
 
-App lưu JWT bằng `flutter_secure_storage`, xác minh lại với API hồ sơ khi mở app, xóa phiên khi nhận 401, giữ phiên đã lưu để thử lại sau lỗi mạng/máy chủ. Đăng xuất xóa JWT trên thiết bị. Backend chưa có refresh token hay API thu hồi JWT.
+App lưu cặp access/refresh token trong một giá trị mã hóa bằng `flutter_secure_storage`. Khi mở lại app hoặc API trả 401, app tự gia hạn và thử lại yêu cầu một lần; các yêu cầu đồng thời dùng chung một lần refresh. Lỗi mạng/máy chủ giữ phiên để thử lại. Đăng xuất thu hồi refresh token trên backend trước khi xóa thông tin trên máy. Access token mặc định 15 phút, phiên refresh tối đa 30 ngày. Tài khoản đang dùng bản cũ cần đăng xuất/đăng nhập lại một lần để nhận refresh token. Chi tiết cấu hình, giới hạn và kiểm thử: [docs/AUTH_SESSIONS.md](docs/AUTH_SESSIONS.md).
 
 Tài khoản cũ chỉ có đăng nhập Google hoặc dữ liệu seed chưa có mật khẩu, nên không thể đăng nhập qua form mới. Cần cơ chế khôi phục/xác minh email riêng để cấp mật khẩu cho những tài khoản này. Hệ thống hiện chưa xác minh quyền sở hữu địa chỉ email khi đăng ký.
 

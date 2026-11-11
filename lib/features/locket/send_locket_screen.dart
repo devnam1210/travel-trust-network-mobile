@@ -117,7 +117,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
     }
     if (!_uncertain) _retryTargets = targets;
     final caption = _caption.text.trim();
-    final token = ref.read(apiServiceProvider).accessToken;
+    final token = ref.read(apiServiceProvider).sessionVersion;
     FocusScope.of(context).unfocus();
     setState(() {
       _sending = true;
@@ -129,7 +129,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
       _mediaId ??= await service.uploadImage(_filePath!);
       if (!mounted ||
           ref.read(authControllerProvider).user?.id != user ||
-          ref.read(apiServiceProvider).accessToken != token) {
+          ref.read(apiServiceProvider).sessionVersion != token) {
         return;
       }
       await service.sendSignal(
@@ -142,7 +142,7 @@ class _SendLocketScreenState extends ConsumerState<SendLocketScreen> {
       );
       if (!mounted ||
           ref.read(authControllerProvider).user?.id != user ||
-          ref.read(apiServiceProvider).accessToken != token) {
+          ref.read(apiServiceProvider).sessionVersion != token) {
         return;
       }
       // 3. Làm mới feed

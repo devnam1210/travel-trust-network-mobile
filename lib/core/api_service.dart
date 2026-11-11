@@ -43,6 +43,17 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          if (options.extra['sessionVersion'] != null &&
+              options.extra['sessionVersion'] != sessionVersion) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.cancel,
+                message: 'Session changed before dispatch.',
+              ),
+            );
+            return;
+          }
           if (accessToken != null && !options.path.startsWith('/auth/')) {
             options.headers['Authorization'] = 'Bearer $accessToken';
           }
@@ -53,12 +64,83 @@ class ApiService {
   }
 
   final Dio _dio;
-  String? accessToken;
+  String? _accessToken;
+  int _sessionVersion = 0;
+  int get sessionVersion => _sessionVersion;
+  String? get accessToken => _accessToken;
+  set accessToken(String? value) {
+    if (value != _accessToken) {
+      _sessionVersion++;
+      _accessToken = value;
+    }
+  }
+
+  // Rotation preserves session identity so open chats and pending requests remain valid.
+  void rotateAccessToken(String value) => _accessToken = value;
+  Future<bool> Function()? onRefreshAccessToken;
+  Future<bool>? _refreshing;
+  Future<void> waitForRefresh() async {
+    try {
+      await _refreshing;
+    } catch (_) {}
+  }
+
+  Future<bool> _refreshOnce() {
+    final existing = _refreshing;
+    if (existing != null) return existing;
+    late final Future<bool> work;
+    work =
+        Future<bool>.sync(
+          () async => await onRefreshAccessToken?.call() ?? false,
+        ).whenComplete(() {
+          if (identical(_refreshing, work)) _refreshing = null;
+        });
+    _refreshing = work;
+    return work;
+  }
+
+  Future<void> _expire(int version) async {
+    if (version != sessionVersion || accessToken == null) return;
+    accessToken = null;
+    await onVisitUnauthorized?.call();
+  }
+
+  Future<bool> _recover401(
+    String path,
+    int version,
+    String? token,
+    bool retried,
+  ) async {
+    if (!_expiresSession(path) || version != sessionVersion || token == null) {
+      return false;
+    }
+    if (retried) {
+      await _expire(version);
+      return false;
+    }
+    if (accessToken != token) return accessToken != null;
+    try {
+      final refreshed = await _refreshOnce();
+      if (version != sessionVersion) return false;
+      if (refreshed && accessToken != null) return true;
+      await _expire(version);
+    } on ApiException catch (error) {
+      if (error.isUnauthorized) await _expire(version);
+      // Transport/server/storage errors preserve credentials and surface for a later retry.
+      rethrow;
+    }
+    return false;
+  }
+
   // Existing session-expiry hook, shared by Visits, Friends and private Locket.
   Future<void> Function()? onVisitUnauthorized;
 
   Future<Map<String, dynamic>> get(String path) async =>
       _object(await _request(path));
+
+  Future<void> postVoid(String path, Map<String, dynamic> data) async {
+    await _request(path, method: 'POST', data: data);
+  }
 
   Future<Map<String, dynamic>> post(
     String path,
@@ -83,36 +165,46 @@ class ApiService {
 
   /// One authenticated SSE connection. The caller cancels it on background/logout.
   Stream<Map<String, dynamic>> notificationEvents(CancelToken cancel) async* {
-    final token = accessToken;
+    final version = sessionVersion;
     try {
-      final response = await _dio.get<ResponseBody>(
-        '/notifications/stream',
-        cancelToken: cancel,
-        options: Options(
-          responseType: ResponseType.stream,
-          receiveTimeout: const Duration(seconds: 40),
-          followRedirects: false,
-          headers: {'Accept': 'text/event-stream'},
-        ),
-      );
-      if (!(response.headers.value(Headers.contentTypeHeader) ?? '').startsWith(
-        'text/event-stream',
-      )) {
-        throw const ApiException('Máy chủ chưa hỗ trợ thông báo realtime.');
+      for (var attempt = 0; attempt < 2; attempt++) {
+        final token = accessToken;
+        try {
+          final response = await _dio.get<ResponseBody>(
+            '/notifications/stream',
+            cancelToken: cancel,
+            options: Options(
+              responseType: ResponseType.stream,
+              receiveTimeout: const Duration(seconds: 40),
+              followRedirects: false,
+              extra: {'sessionVersion': version},
+              headers: {'Accept': 'text/event-stream'},
+            ),
+          );
+          if (!(response.headers.value(Headers.contentTypeHeader) ?? '')
+              .startsWith('text/event-stream')) {
+            throw const ApiException('Máy chủ chưa hỗ trợ thông báo realtime.');
+          }
+          yield* decodeNotificationEvents(response.data!.stream);
+          return;
+        } on DioException catch (e) {
+          if (CancelToken.isCancel(e)) return;
+          if (e.response?.statusCode == 401 &&
+              await _recover401(
+                '/notifications/stream',
+                version,
+                token,
+                attempt > 0,
+              )) {
+            if (cancel.isCancelled) return;
+            continue;
+          }
+          throw ApiException(
+            'Kết nối thông báo bị gián đoạn.',
+            statusCode: e.response?.statusCode,
+          );
+        }
       }
-      yield* decodeNotificationEvents(response.data!.stream);
-    } on DioException catch (e) {
-      if (CancelToken.isCancel(e)) return;
-      if (e.response?.statusCode == 401 &&
-          token != null &&
-          token == accessToken) {
-        accessToken = null;
-        await onVisitUnauthorized?.call();
-      }
-      throw ApiException(
-        'Kết nối thông báo bị gián đoạn.',
-        statusCode: e.response?.statusCode,
-      );
     } finally {
       if (!cancel.isCancelled) cancel.cancel();
     }
@@ -156,7 +248,10 @@ class ApiService {
     String method = 'GET',
     Object? data,
     ResponseType responseType = ResponseType.json,
+    bool retried = false,
+    int? expectedSession,
   }) async {
+    final version = expectedSession ?? sessionVersion;
     final requestToken = accessToken;
     try {
       final response = await _dio.request<dynamic>(
@@ -164,12 +259,13 @@ class ApiService {
         data: data,
         options: Options(
           method: method,
+          extra: {'sessionVersion': version},
           responseType: responseType,
           headers: responseType == ResponseType.bytes
               ? {'Accept': 'image/*'}
               : null,
           // Never forward a private-image request/JWT to a redirect target.
-          followRedirects: responseType != ResponseType.bytes,
+          followRedirects: false,
         ),
       );
       final body = response.data;
@@ -186,13 +282,16 @@ class ApiService {
       }
       return body['data'];
     } on DioException catch (error) {
-      // Ignore late 401s from an old session. Only one callback clears a JWT.
       if (error.response?.statusCode == 401 &&
-          _expiresSession(path) &&
-          requestToken != null &&
-          requestToken == accessToken) {
-        accessToken = null;
-        await onVisitUnauthorized?.call();
+          await _recover401(path, version, requestToken, retried)) {
+        return _request(
+          path,
+          method: method,
+          data: data is FormData ? data.clone() : data,
+          responseType: responseType,
+          retried: true,
+          expectedSession: version,
+        );
       }
       final body = _errorBody(error.response?.data);
       if (body is Map<String, dynamic>) {
@@ -221,7 +320,10 @@ class ApiService {
 
   bool _expiresSession(String path) {
     final endpoint = Uri.parse(path).path;
-    return endpoint.startsWith('/visits/') ||
+    return (onRefreshAccessToken != null &&
+            !endpoint.startsWith('/auth/') &&
+            !endpoint.startsWith('/places')) ||
+        endpoint.startsWith('/visits/') ||
         endpoint == '/friends' ||
         endpoint.startsWith('/friends/') ||
         endpoint.startsWith('/locket/') ||

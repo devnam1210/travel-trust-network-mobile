@@ -91,7 +91,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
     if (_loadingMore || !_hasMore) return;
     final generation = _generation;
     final user = ref.read(authControllerProvider).user?.id;
-    final token = ref.read(apiServiceProvider).accessToken;
+    final token = ref.read(apiServiceProvider).sessionVersion;
     setState(() {
       _loadingMore = true;
       _pageError = null;
@@ -103,7 +103,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
       if (!mounted ||
           generation != _generation ||
           user != ref.read(authControllerProvider).user?.id ||
-          token != ref.read(apiServiceProvider).accessToken) {
+          token != ref.read(apiServiceProvider).sessionVersion) {
         return;
       }
       setState(() {
@@ -131,7 +131,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
   Future<void> _compose() async {
     if (_composing) return;
     final user = ref.read(authControllerProvider).user?.id;
-    final token = ref.read(apiServiceProvider).accessToken;
+    final token = ref.read(apiServiceProvider).sessionVersion;
     if (user == null) return;
     setState(() => _composing = true);
     try {
@@ -144,7 +144,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
       if (!mounted ||
           friend == null ||
           user != ref.read(authControllerProvider).user?.id ||
-          token != ref.read(apiServiceProvider).accessToken) {
+          token != ref.read(apiServiceProvider).sessionVersion) {
         return;
       }
       await Navigator.of(context).push(
@@ -152,7 +152,7 @@ class _InboxScreenState extends ConsumerState<InboxScreen>
       );
       if (mounted &&
           user == ref.read(authControllerProvider).user?.id &&
-          token == ref.read(apiServiceProvider).accessToken) {
+          token == ref.read(apiServiceProvider).sessionVersion) {
         ref.invalidate(inboxProvider);
       }
     } finally {

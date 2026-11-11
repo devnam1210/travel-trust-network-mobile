@@ -29,19 +29,19 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   int _page = 0, _generation = 0;
   String? _error, _pageError;
   late final String? _viewer;
-  late final String? _token;
+  late final int _token;
 
   bool _active(int generation) =>
       mounted &&
       generation == _generation &&
       ref.read(authControllerProvider).user?.id == _viewer &&
-      ref.read(apiServiceProvider).accessToken == _token;
+      ref.read(apiServiceProvider).sessionVersion == _token;
 
   @override
   void initState() {
     super.initState();
     _viewer = ref.read(authControllerProvider).user?.id;
-    _token = ref.read(apiServiceProvider).accessToken;
+    _token = ref.read(apiServiceProvider).sessionVersion;
     _load();
   }
 

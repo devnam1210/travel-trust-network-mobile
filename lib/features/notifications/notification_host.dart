@@ -52,7 +52,8 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
   Timer? _retry;
   Timer? _unreadPoll;
   final _seen = <String>{};
-  String? _user, _jwt;
+  String? _user;
+  int? _jwt;
   bool _foreground = true, _pushReady = false;
   int _generation = 0, _failures = 0;
 
@@ -67,7 +68,7 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
 
   void _session(AuthState auth) {
     final user = auth.status == AuthStatus.authenticated ? auth.user?.id : null;
-    final jwt = ref.read(apiServiceProvider).accessToken;
+    final jwt = ref.read(apiServiceProvider).sessionVersion;
     if (_user == user && _jwt == jwt) return;
     _generation++;
     _stopStream();
@@ -84,7 +85,7 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
     ref.read(notificationEventProvider.notifier).receive(null);
     ref.invalidate(unreadNotificationsProvider);
     ref.invalidate(unreadMessagesProvider);
-    if (user != null && jwt != null) {
+    if (user != null && ref.read(apiServiceProvider).accessToken != null) {
       final generation = _generation;
       _unreadPoll = Timer.periodic(const Duration(seconds: 5), (_) {
         if (_foreground && _active(generation)) {
@@ -101,7 +102,7 @@ class _NotificationHostState extends ConsumerState<NotificationHost>
       generation == _generation &&
       _user != null &&
       ref.read(authControllerProvider).user?.id == _user &&
-      ref.read(apiServiceProvider).accessToken == _jwt;
+      ref.read(apiServiceProvider).sessionVersion == _jwt;
 
   void _connect() {
     if (_user == null || !_foreground || _cancel != null) return;

@@ -25,7 +25,7 @@ Có **14** REST endpoints nghiệp vụ trong 7 controllers. Danh sách được
 | JSON headers | `Accept: application/json`; request JSON `Content-Type: application/json`. Không cần body/Content-Type cho GET theo hợp đồng BE; FE vẫn cấu hình mặc định JSON. |
 | Authentication | `Authorization: Bearer &lt;JWT&gt;` cho protected endpoint; public auth/places không yêu cầu token. FE chủ động không thêm Bearer cho /auth/. |
 | Roles | Không có role-based authorization: CustomUserDetails.getAuthorities trả list rỗng; SecurityConfig kiểm authenticated. Ownership được service visit/review kiểm riêng. |
-| JWT | Stateless; signature và expiration được kiểm; subject UUID và email claim bắt buộc. JWT filter không lookup user DB mỗi request. Không thấy refresh/revoke/logout REST API. |
+| JWT | Access JWT kiểm signature, expiration, subject UUID và email; mặc định 15 phút. Refresh token xoay vòng lưu bản băm trong DB, tối đa 30 ngày. Có `POST /auth/refresh` và `/auth/logout`; xem `docs/AUTH_SESSIONS.md`. Logout thu hồi refresh, access JWT còn hiệu lực đến expiry. |
 | Thành công | Tất cả controller trả trực tiếp ApiResponse, mặc định HTTP 200; không khai báo 201/204. Envelope `{success:true, code:"SUCCESS", message:string, data:T, timestamp:LocalDateTime}`. |
 | Lỗi | `{success:false, code:string, message:string, data:null, timestamp:LocalDateTime}`. Message validation ghép field và message; không có errors[] riêng. |
 | FE decode | ApiService bắt buộc envelope object và success==true, unwrap data; get/post/put/upload yêu cầu object, getList yêu cầu List. Request có timeout connect/send/receive 15s. |

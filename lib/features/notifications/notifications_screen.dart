@@ -39,17 +39,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   bool _loading = true, _more = false, _hasMore = true;
   String? _error, _before;
   int _generation = 0;
-  late final String? _user, _jwt;
+  late final String? _user;
+  late final int _jwt;
   bool get _active =>
       mounted &&
       ref.read(authControllerProvider).user?.id == _user &&
-      ref.read(apiServiceProvider).accessToken == _jwt;
+      ref.read(apiServiceProvider).sessionVersion == _jwt;
 
   @override
   void initState() {
     super.initState();
     _user = ref.read(authControllerProvider).user?.id;
-    _jwt = ref.read(apiServiceProvider).accessToken;
+    _jwt = ref.read(apiServiceProvider).sessionVersion;
     _load();
   }
 

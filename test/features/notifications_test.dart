@@ -251,6 +251,7 @@ void main() {
         ),
         findsOneWidget,
       );
+      api.rotateAccessToken('rotated-jwt');
       api.messageCount = 3;
       await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();

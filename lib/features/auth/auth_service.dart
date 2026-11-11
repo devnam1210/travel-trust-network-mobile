@@ -3,11 +3,36 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/app_config.dart';
 import 'auth_session.dart';
 import '../../core/api_service.dart';
+import '../../core/session_tokens.dart';
 
 class AuthService {
   AuthService({required this.api});
 
   final ApiService api;
+  Future<SessionTokens> refresh(String refreshToken) async {
+    final response = await api.post('/auth/refresh', {
+      'refreshToken': refreshToken,
+    });
+    final SessionTokens tokens;
+    try {
+      tokens = SessionTokens.fromJson(response);
+    } on FormatException {
+      throw const ApiException(
+        'Phản hồi gia hạn phiên không hợp lệ. Vui lòng thử lại.',
+        statusCode: 502,
+      );
+    }
+    if (tokens.refreshToken == null) {
+      throw const ApiException(
+        'Máy chủ chưa hỗ trợ gia hạn phiên. Vui lòng thử lại.',
+        statusCode: 502,
+      );
+    }
+    return tokens;
+  }
+
+  Future<void> logout(String refreshToken) =>
+      api.postVoid('/auth/logout', {'refreshToken': refreshToken});
   static Future<void>? _googleInitialization;
 
   Future<AuthSession?> signInWithGoogle() async {

@@ -38,19 +38,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       _uncertain = false;
   String? _error, _sendError, _syncError, _clientId;
   late final String? _userId;
-  late final String? _token;
+  late final int _token;
   bool _foreground = true;
 
   bool get _active =>
       mounted &&
       ref.read(authControllerProvider).user?.id == _userId &&
-      ref.read(apiServiceProvider).accessToken == _token;
+      ref.read(apiServiceProvider).sessionVersion == _token;
 
   @override
   void initState() {
     super.initState();
     _userId = ref.read(authControllerProvider).user?.id;
-    _token = ref.read(apiServiceProvider).accessToken;
+    _token = ref.read(apiServiceProvider).sessionVersion;
     _quote = widget.quote;
     WidgetsBinding.instance.addObserver(this);
     _scroll.addListener(_queueRead);

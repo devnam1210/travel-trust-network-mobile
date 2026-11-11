@@ -42,7 +42,11 @@ class NoPush extends PushGateway {
 }
 
 class MemoryTokenStorage implements TokenStorage {
-  String? token;
+  String? _stored;
+  String? get token => _stored?.startsWith('{') == true
+      ? (jsonDecode(_stored!) as Map<String, dynamic>)['accessToken'] as String?
+      : _stored;
+  set token(String? value) => _stored = value;
   int reads = 0;
   int writes = 0;
   int clears = 0;
@@ -50,7 +54,7 @@ class MemoryTokenStorage implements TokenStorage {
   @override
   Future<String?> read() async {
     reads++;
-    return token;
+    return _stored;
   }
 
   @override

@@ -16,18 +16,23 @@ void locketCallbackDispatcher() {
   Workmanager().executeTask((task, _) async {
     WidgetsFlutterBinding.ensureInitialized();
     try {
-      final token = await const SecureTokenStorage().read();
+      final token =
+          (await const SecureTokenStorage().readTokens())?.accessToken;
       if (token == null) return true; // chưa đăng nhập: bỏ qua
       final api = ApiService()..accessToken = token;
       try {
         final feed = await LocketService(api: api).getFeed();
-        if (await const SecureTokenStorage().read() == token) {
+        if ((await const SecureTokenStorage().readTokens())?.accessToken ==
+            token) {
           await LocketWidgetService.updateFromFeed(feed);
         }
       } finally {
         api.close();
       }
       return true;
+    } on ApiException catch (error) {
+      // The foreground coordinator owns refresh rotation; background isolates never consume refresh tokens.
+      return error.isUnauthorized;
     } catch (_) {
       return false; // lỗi mạng: WorkManager tự thử lại
     }

@@ -656,6 +656,26 @@ void main() {
     },
   );
 
+  testWidgets(
+    'open chat keeps receiving and acknowledging messages after access token rotation',
+    (tester) async {
+      api.messages.add(api.message(1, 'Before refresh', sender: 'peer'));
+      await open(tester, const ChatScreen(conversationId: 'chat'));
+      api.rotateAccessToken('new-access-token');
+      api.messages.add(api.message(2, 'After refresh', sender: 'peer'));
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+      expect(find.text('After refresh'), findsOneWidget);
+      expect(api.readRequests, contains(2));
+      await tester.enterText(find.byType(TextField), 'Reply after refresh');
+      await tester.pump();
+      await tester.tap(sendButton());
+      await tester.pumpAndSettle();
+      expect(api.sent.last['body'], 'Reply after refresh');
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   test('client request IDs are valid distinct UUIDs', () {
     final ids = List.generate(100, (_) => MessageService.newClientId());
     expect(ids.toSet(), hasLength(100));

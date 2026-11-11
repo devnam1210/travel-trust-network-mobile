@@ -45,7 +45,7 @@ class PushRegistration {
   final PushGateway gateway;
   Future<void> _work = Future.value();
   String? _token;
-  String? _registeredJwt;
+  int? _registeredJwt;
   int _generation = 0;
 
   Future<void> register(String token) {
@@ -53,7 +53,7 @@ class PushRegistration {
     return _work = _work
         .then((_) async {
           if (generation != _generation) return;
-          final jwt = service.api.accessToken;
+          final jwt = service.api.sessionVersion;
           await service.register(token);
           _token = token;
           _registeredJwt = jwt;
@@ -67,7 +67,7 @@ class PushRegistration {
       final token = _token;
       _token = null;
       try {
-        if (token != null && _registeredJwt == service.api.accessToken) {
+        if (token != null && _registeredJwt == service.api.sessionVersion) {
           await service.unregister(token);
         }
       } catch (_) {}

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import '../../core/session_tokens.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'user_model.dart';
@@ -42,6 +44,39 @@ final authControllerProvider = NotifierProvider<AuthController, AuthState>(
 );
 
 class AuthController extends Notifier<AuthState> {
+  SessionTokens? _tokens;
+  bool _endingSession = false;
+  Future<void> _credentialWork = Future.value();
+
+  Future<T> _credentials<T>(Future<T> Function() action) {
+    final result = Completer<T>();
+    _credentialWork = _credentialWork.then((_) async {
+      try {
+        result.complete(await action());
+      } catch (error, stack) {
+        result.completeError(error, stack);
+      }
+    });
+    return result.future;
+  }
+
+  Future<bool> _refreshAccessToken() async {
+    final previous = _tokens;
+    if (!ref.mounted || _endingSession || previous?.refreshToken == null) {
+      return false;
+    }
+    final version = _api.sessionVersion;
+    final next = await _auth.refresh(previous!.refreshToken!);
+    return _credentials(() async {
+      if (!ref.mounted || version != _api.sessionVersion) return false;
+      await _storage.writeTokens(next);
+      if (!ref.mounted || version != _api.sessionVersion) return false;
+      _tokens = next;
+      _api.rotateAccessToken(next.accessToken);
+      return true;
+    });
+  }
+
   ApiService get _api => ref.read(apiServiceProvider);
   AuthService get _auth => ref.read(authServiceProvider);
   ProfileService get _profile => ref.read(profileServiceProvider);
@@ -50,12 +85,18 @@ class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() {
     final api = _api;
+    api.onRefreshAccessToken = _refreshAccessToken;
     api.onVisitUnauthorized = () async {
-      if (ref.mounted && state.status == AuthStatus.authenticated) {
+      if (ref.mounted &&
+          !_endingSession &&
+          state.status == AuthStatus.authenticated) {
         await _expireSession();
       }
     };
-    ref.onDispose(() => api.onVisitUnauthorized = null);
+    ref.onDispose(() {
+      api.onVisitUnauthorized = null;
+      api.onRefreshAccessToken = null;
+    });
     scheduleMicrotask(() {
       if (ref.mounted) unawaited(restoreSession());
     });
@@ -66,14 +107,15 @@ class AuthController extends Notifier<AuthState> {
     if (state.isBusy) return;
     state = const AuthState(status: AuthStatus.restoring, isBusy: true);
     try {
-      final token = await _storage.read();
+      final tokens = await _storage.readTokens();
       if (!ref.mounted) return;
-      if (token == null || token.trim().isEmpty) {
+      if (tokens == null) {
         _api.accessToken = null;
         state = const AuthState();
         return;
       }
-      _api.accessToken = token;
+      _tokens = tokens;
+      _api.accessToken = tokens.accessToken;
       final user = await _profile.getProfile();
       if (ref.mounted) {
         state = AuthState(status: AuthStatus.authenticated, user: user);
@@ -117,8 +159,9 @@ class AuthController extends Notifier<AuthState> {
         state = const AuthState();
         return;
       }
-      await _storage.write(session.accessToken);
+      await _credentials(() => _storage.writeTokens(session.tokens));
       if (!ref.mounted) return;
+      _tokens = session.tokens;
       _api.accessToken = session.accessToken;
       state = AuthState(status: AuthStatus.authenticated, user: session.user);
     } catch (error) {
@@ -129,7 +172,7 @@ class AuthController extends Notifier<AuthState> {
   Future<void> refreshProfile() async {
     if (state.isBusy || state.status != AuthStatus.authenticated) return;
     final user = state.user;
-    final token = _api.accessToken;
+    final token = _api.sessionVersion;
     state = AuthState(
       status: AuthStatus.authenticated,
       user: user,
@@ -137,11 +180,11 @@ class AuthController extends Notifier<AuthState> {
     );
     try {
       final updated = await _profile.getProfile();
-      if (ref.mounted && token == _api.accessToken) {
+      if (ref.mounted && token == _api.sessionVersion) {
         state = AuthState(status: AuthStatus.authenticated, user: updated);
       }
     } catch (error) {
-      if (!ref.mounted || token != _api.accessToken) return;
+      if (!ref.mounted || token != _api.sessionVersion) return;
       if (_invalidSession(error)) {
         await _expireSession();
       } else {
@@ -161,7 +204,7 @@ class AuthController extends Notifier<AuthState> {
   }) async {
     if (state.isBusy || state.status != AuthStatus.authenticated) return;
     final user = state.user;
-    final token = _api.accessToken;
+    final token = _api.sessionVersion;
     state = AuthState(
       status: AuthStatus.authenticated,
       user: user,
@@ -173,11 +216,11 @@ class AuthController extends Notifier<AuthState> {
         bio: bio,
         avatarUrl: avatarUrl,
       );
-      if (ref.mounted && token == _api.accessToken) {
+      if (ref.mounted && token == _api.sessionVersion) {
         state = AuthState(status: AuthStatus.authenticated, user: updated);
       }
     } catch (error) {
-      if (!ref.mounted || token != _api.accessToken) return;
+      if (!ref.mounted || token != _api.sessionVersion) return;
       if (_invalidSession(error)) {
         await _expireSession();
       } else {
@@ -194,31 +237,41 @@ class AuthController extends Notifier<AuthState> {
   Future<void> logout() async {
     if (state.isBusy) return;
     final previous = state;
+    _endingSession = true;
     state = AuthState(
       status: previous.status,
       user: previous.user,
       isBusy: true,
     );
     try {
-      await ref.read(pushRegistrationProvider).detach();
-      await _storage.clear();
+      // Finish any rotation already in flight before revoking the resulting family.
+      await _api.waitForRefresh();
       if (!ref.mounted) return;
+      final refresh = _tokens?.refreshToken;
+      if (refresh != null) await _auth.logout(refresh);
+      await ref.read(pushRegistrationProvider).detach();
+      await _credentials(() => _storage.clear());
+      if (!ref.mounted) return;
+      _tokens = null;
       _api.accessToken = null;
-      if (ref.mounted) state = const AuthState();
+      state = const AuthState();
     } catch (_) {
       if (ref.mounted) {
         state = AuthState(
           status: previous.status,
           user: previous.user,
-          error: 'Không thể xóa phiên đã lưu. Vui lòng thử đăng xuất lại.',
+          error: 'Không thể đăng xuất. Kiểm tra kết nối và thử lại.',
         );
       }
+    } finally {
+      _endingSession = false;
     }
   }
 
   bool _invalidSession(Object error) =>
-      error is ApiException &&
-      (error.isUnauthorized || error.statusCode == 404);
+      error is FormatException ||
+      (error is ApiException &&
+          (error.isUnauthorized || error.statusCode == 404));
 
   Future<void> _expireSession() async {
     state = const AuthState(status: AuthStatus.restoring, isBusy: true);
@@ -226,7 +279,8 @@ class AuthController extends Notifier<AuthState> {
     try {
       // An expired request may itself be registering/removing a device. Avoid waiting on that same request.
       unawaited(ref.read(pushRegistrationProvider).detach());
-      await _storage.clear();
+      await _credentials(() => _storage.clear());
+      _tokens = null;
       if (!ref.mounted) return;
       if (ref.mounted) {
         state = const AuthState(
